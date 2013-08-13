@@ -1,6 +1,9 @@
 # coding=utf-8
+from itertools import groupby
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from guardian.admin import GuardedModelAdmin
+from guardian.utils import get_user_obj_perms_model
 from core.models import LegalEntity, AddressObject, AddressObjectType, HeadSpeciality, AddressObjectService, BaseModel
 
 __author__ = 'sergio'
@@ -19,6 +22,25 @@ class BaseModelAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('created_at', 'modified_at', 'deleted_at')
 
+class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
+    def queryset(self, request):
+        qs = super(BaseGuardedModelAdmin, self).queryset(request)
+        if request.user.is_superuser:
+            return qs
+        ctype = ContentType.objects.get_for_model(self.model)
+        user_model = get_user_obj_perms_model(self.model)
+        user_obj_perms_queryset = (user_model.objects
+            .filter(user=request.user)
+            .filter(permission__content_type=ctype))
+        user_obj_perms = user_obj_perms_queryset.values_list()
+        data = list(user_obj_perms)
+        keyfunc = lambda t: t[0] # sorting/grouping by pk (first in result tuple)
+        data = sorted(data, key=keyfunc)
+        pk_list = []
+        for pk, group in groupby(data, keyfunc):
+            pk_list.append(pk)
+
+        return qs.filter(pk__in=pk_list)
 
 class AddressObjectInline(admin.StackedInline):
     model = AddressObject
@@ -44,10 +66,11 @@ class AddressObjectInline(admin.StackedInline):
     extra = 0
 
 
-class LegalEntityAdmin(GuardedModelAdmin, BaseModelAdmin):
+class LegalEntityAdmin(BaseGuardedModelAdmin):
     model = LegalEntity
     date_hierarchy = "created_at"
     list_display = ("name", "chief_name", "jur_address",)+BaseModelAdmin.list_display
+    #user_can_access_owned_objects_only = True
     fieldsets = BaseModelAdmin.fieldsets + (
         (
             u"Основные параметры",
