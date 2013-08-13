@@ -27,20 +27,11 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         qs = super(BaseGuardedModelAdmin, self).queryset(request)
         if request.user.is_superuser:
             return qs
-        ctype = ContentType.objects.get_for_model(self.model)
         user_model = get_user_obj_perms_model(self.model)
         user_obj_perms_queryset = (user_model.objects
             .filter(user=request.user)
-            .filter(permission__content_type=ctype))
-        user_obj_perms = user_obj_perms_queryset.values_list()
-        data = list(user_obj_perms)
-        keyfunc = lambda t: t[0] # sorting/grouping by pk (first in result tuple)
-        data = sorted(data, key=keyfunc)
-        pk_list = []
-        for pk, group in groupby(data, keyfunc):
-            pk_list.append(pk)
-
-        return qs.filter(pk__in=pk_list)
+            .filter(permission__content_type=ContentType.objects.get_for_model(self.model)))
+        return qs.filter(pk__in=user_obj_perms_queryset)
 
 class AddressObjectInline(admin.StackedInline):
     model = AddressObject
