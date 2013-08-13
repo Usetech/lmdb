@@ -22,6 +22,7 @@ class BaseModelAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('created_at', 'modified_at', 'deleted_at')
 
+
 class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
     def queryset(self, request):
         qs = super(BaseGuardedModelAdmin, self).queryset(request)
@@ -32,6 +33,7 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
             .filter(user=request.user)
             .filter(permission__content_type=ContentType.objects.get_for_model(self.model)))
         return qs.filter(pk__in=user_obj_perms_queryset)
+
 
 class AddressObjectInline(admin.StackedInline):
     model = AddressObject
