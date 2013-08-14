@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from guardian.admin import GuardedModelAdmin
 from guardian.utils import get_user_obj_perms_model
-from core.models import LegalEntity, AddressObject, AddressObjectType, HeadSpeciality, AddressObjectService, BaseModel
+from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType
 
 __author__ = 'sergio'
 
@@ -35,34 +35,10 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         return qs.filter(pk__in=user_obj_perms_queryset)
 
 
-class AddressObjectInline(admin.StackedInline):
-    model = AddressObject
-    classes = ('open',)
-    inline_classes = ('open',)
-    readonly_fields = BaseModelAdmin.readonly_fields
-    fieldsets = BaseModelAdmin.fieldsets + (
-        (
-            u"Основные параметры",
-            {
-                'fields': (
-                    ("type", "name", "short_name"),
-                    ("full_name", ),
-                    ("chief", "chief_sex", "chief_speciality",),
-                    ("services",),
-                    ("okrug", "address")
-                )
-            }
-        ),
-    )
-    filter_horizontal = ["services"]
-
-    extra = 0
-
-
 class LegalEntityAdmin(BaseGuardedModelAdmin):
     model = LegalEntity
     date_hierarchy = "created_at"
-    list_display = ("name", "chief_name", "jur_address",)+BaseModelAdmin.list_display
+    list_display = ("name", "chief_first_name", "jur_address",)+BaseModelAdmin.list_display
     #user_can_access_owned_objects_only = True
     fieldsets = BaseModelAdmin.fieldsets + (
         (
@@ -71,18 +47,13 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
                 'fields': (
                     ("name",),
                     ("ogrn_code", "inn_code"),
-                    ("chief_name",),
+                    ("chief_first_name",),
                     ("jur_address",),
-                    ("fact_address",),
-                    ("head_physician",),
-                    ("reception_phone", "registry_phone"),
-                    ("worktime",)
+                    ("fact_address",)
                 )
             }
         ),
     )
-
-    inlines = [AddressObjectInline]
 
 
 class NamedModelAdmin(BaseModelAdmin):
@@ -97,19 +68,20 @@ class NamedModelAdmin(BaseModelAdmin):
     )
     list_display = ("name", ) + BaseModelAdmin.list_display
 
-class AddressObjectTypeAdmin(NamedModelAdmin):
-    model = AddressObjectType
+
+class HealthObjectTypeAdmin(NamedModelAdmin):
+    model = HealthObjectType
 
 
-class HeadSpecialityAdmin(NamedModelAdmin):
-    model = HeadSpeciality
+class PositionAdmin(NamedModelAdmin):
+    model = Position
 
 
-class AddressObjectServiceAdmin(NamedModelAdmin):
-    model = AddressObjectService
+class ServiceTypeAdmin(NamedModelAdmin):
+    model = ServiceType
 
 
 admin.site.register(LegalEntity, LegalEntityAdmin)
-admin.site.register(AddressObjectType, AddressObjectTypeAdmin)
-admin.site.register(HeadSpeciality, HeadSpecialityAdmin)
-admin.site.register(AddressObjectService, AddressObjectServiceAdmin)
+admin.site.register(HealthObjectType, HealthObjectTypeAdmin)
+admin.site.register(Position, PositionAdmin)
+admin.site.register(ServiceType, ServiceTypeAdmin)
