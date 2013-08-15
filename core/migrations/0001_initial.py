@@ -38,6 +38,30 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'core', ['ServiceType'])
 
+        # Adding model 'StreetObject'
+        db.create_table(u'core_streetobject', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('type', self.gf('django.db.models.fields.CharField')(max_length=128)),
+        ))
+        db.send_create_signal(u'core', ['StreetObject'])
+
+        # Adding unique constraint on 'StreetObject', fields ['name', 'type']
+        db.create_unique(u'core_streetobject', ['name', 'type'])
+
+        # Adding model 'DistrictObject'
+        db.create_table(u'core_districtobject', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
+        ))
+        db.send_create_signal(u'core', ['DistrictObject'])
+
         # Adding model 'AddressObject'
         db.create_table(u'core_addressobject', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -46,11 +70,10 @@ class Migration(SchemaMigration):
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('zip_code', self.gf('django.db.models.fields.CharField')(max_length=6)),
             ('area', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('district', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('district', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.DistrictObject'])),
             ('city_type', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('city', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('street', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('street_type', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('street', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.StreetObject'])),
             ('house', self.gf('django.db.models.fields.CharField')(max_length=6)),
             ('house_letter', self.gf('django.db.models.fields.CharField')(max_length=2, null=True, blank=True)),
             ('housing', self.gf('django.db.models.fields.CharField')(max_length=2, null=True, blank=True)),
@@ -139,6 +162,9 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Service', fields ['legal_entity', 'healing_object', 'service']
         db.delete_unique(u'core_service', ['legal_entity_id', 'healing_object_id', 'service_id'])
 
+        # Removing unique constraint on 'StreetObject', fields ['name', 'type']
+        db.delete_unique(u'core_streetobject', ['name', 'type'])
+
         # Deleting model 'HealthObjectType'
         db.delete_table(u'core_healthobjecttype')
 
@@ -147,6 +173,12 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ServiceType'
         db.delete_table(u'core_servicetype')
+
+        # Deleting model 'StreetObject'
+        db.delete_table(u'core_streetobject')
+
+        # Deleting model 'DistrictObject'
+        db.delete_table(u'core_districtobject')
 
         # Deleting model 'AddressObject'
         db.delete_table(u'core_addressobject')
@@ -170,15 +202,22 @@ class Migration(SchemaMigration):
             'city_type': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'district': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'district': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.DistrictObject']"}),
             'house': ('django.db.models.fields.CharField', [], {'max_length': '6'}),
             'house_letter': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
             'housing': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
-            'street': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'street_type': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'street': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.StreetObject']"}),
             'zip_code': ('django.db.models.fields.CharField', [], {'max_length': '6'})
+        },
+        u'core.districtobject': {
+            'Meta': {'object_name': 'DistrictObject'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
         },
         u'core.healingobject': {
             'Meta': {'object_name': 'HealingObject'},
@@ -271,6 +310,15 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'})
+        },
+        u'core.streetobject': {
+            'Meta': {'unique_together': "(('name', 'type'),)", 'object_name': 'StreetObject'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'type': ('django.db.models.fields.CharField', [], {'max_length': '128'})
         }
     }
 
