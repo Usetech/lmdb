@@ -11,8 +11,8 @@ class Migration(SchemaMigration):
         # Adding model 'HealthObjectType'
         db.create_table(u'core_healthobjecttype', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
         ))
@@ -21,8 +21,8 @@ class Migration(SchemaMigration):
         # Adding model 'Position'
         db.create_table(u'core_position', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
         ))
@@ -31,8 +31,8 @@ class Migration(SchemaMigration):
         # Adding model 'ServiceType'
         db.create_table(u'core_servicetype', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
         ))
@@ -41,22 +41,18 @@ class Migration(SchemaMigration):
         # Adding model 'StreetObject'
         db.create_table(u'core_streetobject', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('type', self.gf('django.db.models.fields.CharField')(max_length=128)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
         ))
         db.send_create_signal(u'core', ['StreetObject'])
-
-        # Adding unique constraint on 'StreetObject', fields ['name', 'type']
-        db.create_unique(u'core_streetobject', ['name', 'type'])
 
         # Adding model 'DistrictObject'
         db.create_table(u'core_districtobject', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
         ))
@@ -65,8 +61,8 @@ class Migration(SchemaMigration):
         # Adding model 'AddressObject'
         db.create_table(u'core_addressobject', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('zip_code', self.gf('django.db.models.fields.CharField')(max_length=6)),
             ('area', self.gf('django.db.models.fields.CharField')(max_length=128)),
@@ -75,17 +71,17 @@ class Migration(SchemaMigration):
             ('city', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('street', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.StreetObject'])),
             ('house', self.gf('django.db.models.fields.CharField')(max_length=6)),
-            ('house_letter', self.gf('django.db.models.fields.CharField')(max_length=2, null=True, blank=True)),
-            ('housing', self.gf('django.db.models.fields.CharField')(max_length=2, null=True, blank=True)),
-            ('building', self.gf('django.db.models.fields.CharField')(max_length=2, null=True, blank=True)),
+            ('house_letter', self.gf('django.db.models.fields.CharField')(max_length=2, blank=True)),
+            ('housing', self.gf('django.db.models.fields.CharField')(max_length=2, blank=True)),
+            ('building', self.gf('django.db.models.fields.CharField')(max_length=2, blank=True)),
         ))
         db.send_create_signal(u'core', ['AddressObject'])
 
         # Adding model 'LegalEntity'
         db.create_table(u'core_legalentity', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('chief_first_name', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('chief_middle_name', self.gf('django.db.models.fields.CharField')(max_length=256)),
@@ -105,8 +101,8 @@ class Migration(SchemaMigration):
         # Adding model 'Service'
         db.create_table(u'core_service', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('chief_first_name', self.gf('django.db.models.fields.CharField')(max_length=256)),
             ('chief_middle_name', self.gf('django.db.models.fields.CharField')(max_length=256)),
@@ -144,8 +140,8 @@ class Migration(SchemaMigration):
         # Adding model 'HealingObject'
         db.create_table(u'core_healingobject', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('address', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.AddressObject'])),
             ('object_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name='healing_objects', to=orm['core.HealthObjectType'])),
@@ -161,9 +157,6 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         # Removing unique constraint on 'Service', fields ['legal_entity', 'healing_object', 'service']
         db.delete_unique(u'core_service', ['legal_entity_id', 'healing_object_id', 'service_id'])
-
-        # Removing unique constraint on 'StreetObject', fields ['name', 'type']
-        db.delete_unique(u'core_streetobject', ['name', 'type'])
 
         # Deleting model 'HealthObjectType'
         db.delete_table(u'core_healthobjecttype')
@@ -197,49 +190,49 @@ class Migration(SchemaMigration):
         u'core.addressobject': {
             'Meta': {'object_name': 'AddressObject'},
             'area': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'building': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
+            'building': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'city_type': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'district': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.DistrictObject']"}),
             'house': ('django.db.models.fields.CharField', [], {'max_length': '6'}),
-            'house_letter': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
-            'housing': ('django.db.models.fields.CharField', [], {'max_length': '2', 'null': 'True', 'blank': 'True'}),
+            'house_letter': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'}),
+            'housing': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'street': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.StreetObject']"}),
             'zip_code': ('django.db.models.fields.CharField', [], {'max_length': '6'})
         },
         u'core.districtobject': {
             'Meta': {'object_name': 'DistrictObject'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
         },
         u'core.healingobject': {
             'Meta': {'object_name': 'HealingObject'},
             'address': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.AddressObject']"}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'full_name': ('django.db.models.fields.CharField', [], {'max_length': '2048'}),
             'global_id': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'info': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'legal_entities': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'healing_objects'", 'symmetrical': 'False', 'through': u"orm['core.Service']", 'to': u"orm['core.LegalEntity']"}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'object_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'healing_objects'", 'to': u"orm['core.HealthObjectType']"}),
             'short_name': ('django.db.models.fields.CharField', [], {'max_length': '1024'})
         },
         u'core.healthobjecttype': {
             'Meta': {'object_name': 'HealthObjectType'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'})
         },
         u'core.legalentity': {
@@ -250,23 +243,23 @@ class Migration(SchemaMigration):
             'chief_phone': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
             'chief_sex': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
             'chief_speciality': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.Position']"}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'fact_address': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'operating_entities'", 'null': 'True', 'to': u"orm['core.AddressObject']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'info': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'inn_code': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'jur_address': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'registered_entities'", 'to': u"orm['core.AddressObject']"}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'ogrn_code': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'})
         },
         u'core.position': {
             'Meta': {'object_name': 'Position'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'})
         },
         u'core.service': {
@@ -278,7 +271,7 @@ class Migration(SchemaMigration):
             'chief_phone': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
             'chief_sex': ('django.db.models.fields.CharField', [], {'max_length': '1'}),
             'chief_speciality': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.Position']"}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'daysoff': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
             'daysoff_restrictions': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
@@ -292,7 +285,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'info': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'legal_entity': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'services'", 'to': u"orm['core.LegalEntity']"}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'paid_services': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
             'phone': ('django.db.models.fields.CharField', [], {'max_length': '256'}),
             'receipes_provisioning': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
@@ -305,20 +298,19 @@ class Migration(SchemaMigration):
         },
         u'core.servicetype': {
             'Meta': {'object_name': 'ServiceType'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'})
         },
         u'core.streetobject': {
-            'Meta': {'unique_together': "(('name', 'type'),)", 'object_name': 'StreetObject'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {}),
+            'Meta': {'object_name': 'StreetObject'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'type': ('django.db.models.fields.CharField', [], {'max_length': '128'})
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
         }
     }
 
