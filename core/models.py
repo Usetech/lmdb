@@ -77,14 +77,15 @@ class AddressObject(BaseModel):
     city_type = fields.CharField(u"Тип нас. пункта", max_length=128)
     city = fields.CharField(u"Нас. пункт", max_length=128)
     street = models.ForeignKey(StreetObject, verbose_name=u"Улица", null=False)
-    house = fields.CharField(u"Дом", max_length=6)
-    house_letter = fields.CharField(u"буква", max_length=2, blank=True)
-    housing = fields.CharField(u"Корпус", max_length=2, blank=True)
-    building = fields.CharField(u"Строение", max_length=2, blank=True)
+    house = fields.CharField(u"Дом", max_length=16, null=False, blank = True)
+    house_letter = fields.CharField(u"буква", max_length=1, null=False, blank=True)
+    housing = fields.CharField(u"Корпус", max_length=16, null=False, blank=True)
+    building = fields.CharField(u"Строение", max_length=16, null=False, blank=True)
 
     class Meta:
         verbose_name = u"адрес"
         verbose_name_plural = u"адреса"
+        index_together = [['house', 'house_letter', 'housing', 'building', 'street'],]
 
 
 SEX_CHOICE = (
