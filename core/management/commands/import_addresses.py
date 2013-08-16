@@ -75,7 +75,7 @@ class Command(BaseCommand):
             street = StreetObject.objects.get(pk=street_id)
             print district.name, street.name
             address = AddressObject();
-            address.id = id
+            address.bsi_id = id
             address.district = district
             address.street = street
             address.house = house

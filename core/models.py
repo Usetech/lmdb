@@ -71,6 +71,7 @@ class DistrictObject(BaseModel):
 
 
 class AddressObject(BaseModel):
+    bsi_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=False, blank=False, unique=True)
     zip_code = fields.CharField(u"Индекс", max_length=6)
     area = fields.CharField(u"Область", max_length=128)
     district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=False)
