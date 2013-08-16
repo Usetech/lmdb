@@ -2,10 +2,10 @@
 
 import codecs
 import csv
-from datetime import datetime
 from optparse import make_option
 from django.core.management import BaseCommand
 import sys
+from django.utils import timezone
 from core.models import DistrictObject
 
 __author__ = 'pparkhomenko'
@@ -57,8 +57,7 @@ class Command(BaseCommand):
             district = DistrictObject()
             district.id = id
             district.name = name
-            district.created_at = datetime.now()
+            district.created_at = timezone.localtime(timezone.now(), timezone.get_current_timezone())
             district.save()
-            print district
 
 

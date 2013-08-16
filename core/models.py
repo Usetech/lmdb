@@ -12,16 +12,9 @@ inn_validator = RegexValidator(regex="\d{12}", message=u"ИНН не соотв�
 
 
 class BaseModel(models.Model):
-    created_at = fields.DateTimeField(u"Дата создания")
-    modified_at = fields.DateTimeField(u"Дата изменения")
+    created_at = fields.DateTimeField(u"Дата создания", auto_now_add=True)
+    modified_at = fields.DateTimeField(u"Дата изменения", auto_now=True)
     deleted_at = fields.DateTimeField(u"Дата удаления", null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        ''' On save, update timestamps '''
-        if not self.id:
-            self.created_at = datetime.datetime.today()
-        self.modified_at = datetime.datetime.today()
-        return super(BaseModel, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
@@ -67,14 +60,25 @@ class ServiceType(NamedModel):
         verbose_name_plural = u"услуги"
 
 
+class StreetObject(BaseModel):
+    name = fields.CharField(u"Название", max_length=128, null=False)
+    type = fields.CharField(u"Тип топонима", max_length=128, null=False)
+
+    class Meta:
+        unique_together = (("name", "type"),)
+
+
+class DistrictObject(BaseModel):
+    name = fields.CharField(u"Название", max_length=128, unique=True, null=False)
+
+
 class AddressObject(BaseModel):
     zip_code = fields.CharField(u"Индекс", max_length=6)
     area = fields.CharField(u"Область", max_length=128)
-    district = fields.CharField(u"Район", max_length=128)
+    district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=False)
     city_type = fields.CharField(u"Тип нас. пункта", max_length=128)
     city = fields.CharField(u"Нас. пункт", max_length=128)
-    street = fields.CharField(u"Улица", max_length=128)
-    street_type = fields.CharField(u"Топоним", max_length=128)
+    street = models.ForeignKey(StreetObject, verbose_name=u"Улица", null=False)
     house = fields.CharField(u"Дом", max_length=6)
     house_letter = fields.CharField(u"буква", max_length=2, null=True, blank=True)
     housing = fields.CharField(u"Корпус", max_length=2, null=True, blank=True)
