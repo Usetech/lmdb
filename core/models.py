@@ -1,15 +1,16 @@
 # coding=utf-8
 import datetime
+import re
 from django.core.validators import RegexValidator
 from django.db import models
 
 # Create your models here.
 from django.db.models import fields
+from core.validators import ogrn_validator, inn_validator
 
-phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123 45 67")
-ogrn_validator = RegexValidator(regex="[1-3,5]\d{12}", message=u"ОГРН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Основной_государственный_регистрационный_номер")
-inn_validator = RegexValidator(regex="\d{12}", message=u"ИНН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Идентификационный_номер_налогоплательщика")
-
+phone_validator = RegexValidator(regex="\(\d{3}\)\s\d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123-45-67")
+#ogrn_validator = RegexValidator(regex="[1-3,5]\d{12}", message=u"ОГРН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Основной_государственный_регистрационный_номер")
+#inn_validator = RegexValidator(regex="\d{12}", message=u"ИНН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Идентификационный_номер_налогоплательщика")
 
 class BaseModel(models.Model):
     created_at = fields.DateTimeField(u"Дата создания", auto_now_add=True)
@@ -64,8 +65,8 @@ class StreetObject(BaseModel):
     name = fields.CharField(u"Название", max_length=128, null=False)
     type = fields.CharField(u"Тип топонима", max_length=128, null=False)
 
-    class Meta:
-        unique_together = (("name", "type"),)
+    #class Meta:
+    #    unique_together = (("name", "type"),)
 
 
 class DistrictObject(BaseModel):
@@ -113,8 +114,7 @@ class LegalEntity(ChiefModelMixin):
     """
     name = fields.CharField(u"Наименование", max_length=128, help_text=u"Наименование юр. лица из устава")
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True, help_text=u"Основной государственный регистрационный номер")
-    inn_code = fields.CharField(u"ИНН", max_length=256,
-                                validators=[RegexValidator(regex="\d+", message=u"ИНН может содержать только цифры")])
+    inn_code = fields.CharField(u"ИНН", max_length=256, validators=[inn_validator])
     jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
 
