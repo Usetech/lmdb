@@ -44,7 +44,8 @@ class Migration(SchemaMigration):
             ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('modified_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=128, db_index=True)),
+            ('valid', self.gf('django.db.models.fields.BooleanField')(default=True)),
         ))
         db.send_create_signal(u'core', ['StreetObject'])
 
@@ -310,7 +311,8 @@ class Migration(SchemaMigration):
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '128', 'db_index': 'True'}),
+            'valid': ('django.db.models.fields.BooleanField', [], {'default': 'True'})
         }
     }
 

@@ -60,10 +60,11 @@ class Command(BaseCommand):
             name = row[name_index].decode(encoding)
             valid = int(row[valid_index])
             print id, name, valid
-            if valid != 0:
+            if True or valid != 0:
                 street = StreetObject()
                 street.id = id
                 street.name = name
+                street.valid = valid != 0
                 street.created_at = timezone.localtime(timezone.now(), timezone.get_current_timezone())
                 street.save()
 

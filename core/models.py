@@ -62,7 +62,8 @@ class ServiceType(NamedModel):
 
 
 class StreetObject(BaseModel):
-    name = fields.CharField(u"Название", max_length=128, null=False, unique=True)
+    name = fields.CharField(u"Название", max_length=128, null=False, db_index=True)
+    valid = fields.BooleanField(u"Действующее название улицы", null=False, default=True)
 
 
 class DistrictObject(BaseModel):
