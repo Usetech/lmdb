@@ -50,7 +50,7 @@ class Command(BaseCommand):
     def import_data(self, reader, encoding):
         id_index, name_index = self.parse_header(reader.next(), encoding)
         for row in reader:
-            id = int(row[id_index])
+            id = row[id_index]
             name = row[name_index].decode(encoding)
             print id, name
             district = DistrictObject()
