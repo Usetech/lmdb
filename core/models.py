@@ -62,11 +62,7 @@ class ServiceType(NamedModel):
 
 
 class StreetObject(BaseModel):
-    name = fields.CharField(u"Название", max_length=128, null=False)
-    type = fields.CharField(u"Тип топонима", max_length=128, null=False)
-
-    #class Meta:
-    #    unique_together = (("name", "type"),)
+    name = fields.CharField(u"Название", max_length=128, null=False, unique=True)
 
 
 class DistrictObject(BaseModel):
@@ -81,9 +77,9 @@ class AddressObject(BaseModel):
     city = fields.CharField(u"Нас. пункт", max_length=128)
     street = models.ForeignKey(StreetObject, verbose_name=u"Улица", null=False)
     house = fields.CharField(u"Дом", max_length=6)
-    house_letter = fields.CharField(u"буква", max_length=2, null=True, blank=True)
-    housing = fields.CharField(u"Корпус", max_length=2, null=True, blank=True)
-    building = fields.CharField(u"Строение", max_length=2, null=True, blank=True)
+    house_letter = fields.CharField(u"буква", max_length=2, blank=True)
+    housing = fields.CharField(u"Корпус", max_length=2, blank=True)
+    building = fields.CharField(u"Строение", max_length=2, blank=True)
 
     class Meta:
         verbose_name = u"адрес"

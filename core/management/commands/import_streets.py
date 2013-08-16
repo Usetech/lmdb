@@ -34,36 +34,37 @@ class Command(BaseCommand):
     def parse_header(self, header, encoding):
         id_index = -1
         name_index = -1
-        type_index = -1
+        valid_index = -1
         index = 0
         for item in header:
+            print item
             item = item.decode(encoding)
             print item
-            if (item == u"Уникальный код улицы"):
+            if item == u"Уникальный код улицы":
                 id_index = index
-            elif (item == u"Основное наименование (без типа топонима)"):
+            elif item == u"Наименование улицы для поиска, сортировки":
                 name_index = index
-            elif (item == u"Наименование типа топонима"):
-                type_index = index
+            elif item == u"Признак действующего наименования (1 — да, 0 — нет)":
+                valid_index = index
             index = index + 1
-        if id_index == -1 or name_index == -1 or type_index == -1:
+        if id_index == -1 or name_index == -1 or valid_index == -1:
             raise Exception("Invalid file headers")
-        return id_index, name_index, type_index
+        return id_index, name_index, valid_index
 
 
     def import_data(self, reader, encoding):
-        id_index, name_index, type_index = self.parse_header(reader.next(), encoding)
-        print id_index, name_index, type_index
+        id_index, name_index, valid_index = self.parse_header(reader.next(), encoding)
+        print id_index, name_index, valid_index
         for row in reader:
-            id = row[id_index]
+            id = int(row[id_index])
             name = row[name_index].decode(encoding)
-            type = row[type_index].decode(encoding)
-            print id, name, type
-            street = StreetObject()
-            street.id = id
-            street.name = name
-            street.type = type
-            street.created_at = timezone.localtime(timezone.now(), timezone.get_current_timezone())
-            street.save()
+            valid = int(row[valid_index])
+            print id, name, valid
+            if valid != 0:
+                street = StreetObject()
+                street.id = id
+                street.name = name
+                street.created_at = timezone.localtime(timezone.now(), timezone.get_current_timezone())
+                street.save()
 
 
