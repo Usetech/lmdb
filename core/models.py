@@ -65,6 +65,9 @@ class StreetObject(BaseModel):
     type = fields.CharField(u"Тип топонима", max_length=128)
     valid = fields.BooleanField(u"Действующее название улицы", null=False, default=True)
 
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         verbose_name = u"улица"
         verbose_name_plural = u"улицы"
@@ -90,8 +93,23 @@ class AddressObject(BaseModel):
     housing = fields.CharField(u"Корпус", max_length=16, null=False, blank=True)
     building = fields.CharField(u"Строение", max_length=16, null=False, blank=True)
 
+    def street_full(self):
+        house = u""
+        if self.house:
+            house = u"д. %s%s " % (self.house, self.house_letter)
+
+        housing = u""
+        if self.housing:
+            housing = u"корп. %s " % self.housing
+
+        building = u""
+        if self.building:
+            building = u"стр. %s " % self.building
+        return u"%s %s %s %s" % (self.street.name, house, housing, building)
+    street_full.short_description = u"Полное наименование"
+
     def __unicode__(self):
-        return "%s %s%s %s %s" % (self.street.name, self.house, self.house_letter, self.housing, self.building)
+        return self.street_full()
 
     class Meta:
         verbose_name = u"адрес"

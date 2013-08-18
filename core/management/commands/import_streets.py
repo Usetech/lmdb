@@ -46,7 +46,7 @@ class Command(BaseCommand):
                 name_index = index
             elif item == u"Признак действующего наименования (1 — да, 0 — нет)":
                 valid_index = index
-            index = index + 1
+            index += 1
         if id_index == -1 or name_index == -1 or valid_index == -1:
             raise Exception("Invalid file headers")
         return id_index, name_index, valid_index
@@ -64,7 +64,7 @@ class Command(BaseCommand):
             street.id = id
             street.name = name
             street.valid = valid != 0
-            street.created_at = timezone.localtime(timezone.now(), timezone.get_current_timezone())
+            street.created_at = timezone.now()
             street.save()
 
 

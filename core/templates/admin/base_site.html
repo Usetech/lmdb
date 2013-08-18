@@ -2,9 +2,8 @@
 {% load admin_static %}
 
 
-{% block extrahead %}
-    EXTRAHEAD
-{% endblock %}
+{#{% block extrahead %}#}
+{#{% endblock %}#}
 
 
 {# Additional CSS includes #}
@@ -20,9 +19,8 @@
 
 
 {# Footer links (left side) #}
-{#{% block footer_links %}#}
-{#  <a href="/docs/" class="icon"><i class="icon-question-sign"></i>Documentation</a>#}
-{#{% endblock %}#}
+{% block footer_links %}
+{% endblock %}
 
 {# Additional header content like notifications or language switcher #}
 {#{% block header_content %}#}
@@ -48,10 +46,11 @@
 {#{% endblock %}#}
 
 {# Footer branding name (center) #}
-{#{% block footer_branding %}#}
-{#{% endblock %}#}
+{% block footer_branding %}
+    База данных медицинских учреждений
+{% endblock %}
 
 
 {% block copyright %}
-  Copyright &copy; 2013 Client<br>Developed by <a href="http://yoursite.com" target="_blank">YourName</a>
+  &copy;2013
 {% endblock %}

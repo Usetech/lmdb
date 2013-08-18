@@ -73,6 +73,7 @@ class AddressObjectAdmin(BaseModelAdmin):
     model = AddressObject
     search_fields = ('street__name', 'district__name')
     raw_id_fields = ('street',)
+    list_select_related = True
     fieldsets = BaseModelAdmin.fieldsets + (
         (
             u"Основные параметры",
@@ -87,7 +88,7 @@ class AddressObjectAdmin(BaseModelAdmin):
             }
         ),
     )
-    list_display = ('district', 'zip_code', 'street', 'house', 'house_letter', 'housing', 'building')
+    list_display = ('district', 'street', 'house', 'house_letter', 'housing', 'building', 'street_full')
 
 
 class HealingObjectServiceInline(admin.StackedInline):
@@ -136,7 +137,7 @@ class HealingObjectInline(admin.StackedInline):
 
 class LegalEntityAdmin(BaseGuardedModelAdmin):
     model = LegalEntity
-    date_hierarchy = "created_at"
+    date_hierarchy = "modified_at"
     search_fields = ('name',)
     list_display = ("name", "chief_first_name", "jur_address",) + BaseModelAdmin.list_display
     raw_id_fields = ('jur_address', 'fact_address')
@@ -177,7 +178,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
 
 class NamedModelAdmin(BaseModelAdmin):
     form = NamedModelForm
-    date_hierarchy = "created_at"
+    date_hierarchy = "modified_at"
     search_fields = ("name", )
     fieldsets = BaseModelAdmin.fieldsets + (
         (
@@ -203,7 +204,7 @@ class ServiceTypeAdmin(NamedModelAdmin):
 
 class StreetObjectAdmin(BaseModelAdmin):
     model = StreetObject
-    date_hierarchy = "created_at"
+    date_hierarchy = "modified_at"
     search_fields = ("name", )
     fieldsets = BaseModelAdmin.fieldsets + (
         (
@@ -212,7 +213,8 @@ class StreetObjectAdmin(BaseModelAdmin):
             }
         ),
     )
-    list_display = ("name", ) + BaseModelAdmin.list_display
+    list_filter = ("valid",)
+    list_display = ("id", "name", "valid",) + BaseModelAdmin.list_display
 
 
 class DistrictObjectAdmin(NamedModelAdmin):

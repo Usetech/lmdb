@@ -1,8 +1,11 @@
 # coding=utf-8
 # Django settings for lanit_mdb project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -133,9 +136,7 @@ ROOT_URLCONF = 'lanit_mdb.urls'
 WSGI_APPLICATION = 'lanit_mdb.wsgi.application'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    os.path.join(PROJECT_ROOT, 'core', 'templates')
 )
 
 INSTALLED_APPS = (
