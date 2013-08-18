@@ -56,11 +56,12 @@ class ServiceType(NamedModel):
     """
 
     class Meta:
-        verbose_name = u"услуга"
-        verbose_name_plural = u"услуги"
+        verbose_name = u"тип услуги"
+        verbose_name_plural = u"типы услуги"
 
 
-class StreetObject(NamedModel):
+class StreetObject(BaseModel):
+    name = fields.CharField(u"Наименование", max_length=128)
     type = fields.CharField(u"Тип топонима", max_length=128)
     valid = fields.BooleanField(u"Действующее название улицы", null=False, default=True)
 
@@ -77,17 +78,20 @@ class DistrictObject(NamedModel):
 
 
 class AddressObject(BaseModel):
-    bsi_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=False, blank=False, unique=True)
+    bsi_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=False, blank=False, unique=True,db_index=True)
     zip_code = fields.CharField(u"Индекс", max_length=6)
     area = fields.CharField(u"Область", max_length=128)
     district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=False)
     city_type = fields.CharField(u"Тип нас. пункта", max_length=128)
     city = fields.CharField(u"Нас. пункт", max_length=128)
     street = models.ForeignKey(StreetObject, verbose_name=u"Улица", null=False)
-    house = fields.CharField(u"Дом", max_length=16, null=False, blank = True)
+    house = fields.CharField(u"Дом", max_length=16, null=False, blank=True)
     house_letter = fields.CharField(u"буква", max_length=1, null=False, blank=True)
     housing = fields.CharField(u"Корпус", max_length=16, null=False, blank=True)
     building = fields.CharField(u"Строение", max_length=16, null=False, blank=True)
+
+    def __unicode__(self):
+        return "%s %s%s %s %s" % (self.street.name, self.house, self.house_letter, self.housing, self.building)
 
     class Meta:
         verbose_name = u"адрес"
@@ -102,11 +106,11 @@ SEX_CHOICE = (
 
 
 class ChiefModelMixin(BaseModel):
-    chief_first_name = fields.CharField(u"Имя руководителя", max_length=256)
-    chief_middle_name = fields.CharField(u"Отчество руководителя", max_length=256)
-    chief_last_name = fields.CharField(u"Фамилия руководителя", max_length=256)
-    chief_sex = fields.CharField(u"Пол руководителя", max_length=1, choices=SEX_CHOICE)
-    chief_speciality = models.ForeignKey(Position, verbose_name=u"Специальность руководителя")
+    chief_first_name = fields.CharField(u"Имя руководителя", max_length=256, blank=True, null=True)
+    chief_middle_name = fields.CharField(u"Отчество руководителя", max_length=256, blank=True, null=True)
+    chief_last_name = fields.CharField(u"Фамилия руководителя", max_length=256, blank=True, null=True)
+    chief_sex = fields.CharField(u"Пол руководителя", max_length=1, choices=SEX_CHOICE, blank=True, null=True)
+    chief_speciality = models.ForeignKey(Position, verbose_name=u"Специальность руководителя", blank=True, null=True)
     chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True, validators=[phone_validator])
 
     class Meta:
@@ -138,15 +142,14 @@ class Service(ChiefModelMixin):
     """
     Услуги
     """
-    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='services')
     healing_object = models.ForeignKey('HealingObject', verbose_name=u"Объект здравоохранения", related_name='services')
     service = models.ForeignKey(ServiceType, related_name='healing_objects', verbose_name=u"Услуга")
-    phone = models.CharField(u"Телефон", max_length=256, validators=[phone_validator])
+    phone = models.CharField(u"Телефон", max_length=256, validators=[phone_validator], blank=True, null=True)
     fax = models.CharField(u"Факс", max_length=256, validators=[phone_validator], null=True, blank=True)
     site_url = models.URLField(u"Адрес сайта", max_length=1024, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
-    workdays = models.CharField(u"Рабочие дни", max_length=128)
-    workhours = models.CharField(u"Часы работы", max_length=128)
+    workdays = models.CharField(u"Рабочие дни", max_length=128, blank=True, null=True)
+    workhours = models.CharField(u"Часы работы", max_length=128, blank=True, null=True)
     daysoff = models.CharField(u"Нерабочие дни", null=True, blank=True, max_length=128)
     daysoff_restrictions = models.CharField(u"Ограничения выходных дней", null=True, blank=True, max_length=256)
     specialization = models.CharField(u"Специализация", max_length=256, null=True, blank=True)
@@ -160,24 +163,27 @@ class Service(ChiefModelMixin):
     receipes_provisioning = models.CharField(u"Обеспечение рецептов", max_length=256, null=True, blank=True)
     aptheke_type = models.CharField(u"Тип аптеки", max_length=256, null=True, blank=True)
 
+    def __unicode__(self):
+        return "%s" % self.service.name
+
     class Meta:
         verbose_name = u"услуга"
         verbose_name_plural = u"услуги"
-        unique_together = ('legal_entity', 'healing_object', 'service')
+        unique_together = ('healing_object', 'service')
 
 
 class HealingObject(BaseModel):
     """
     Объект здравоохранения
     """
-    address = models.ForeignKey(AddressObject)
     object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
-    legal_entities = models.ManyToManyField(LegalEntity, through=Service, related_name='healing_objects')
+    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=True)
+    address = models.ForeignKey(AddressObject, verbose_name=u"Адрес")
 
     full_name = fields.CharField(u"Полное наименование", max_length=2048,
                                  help_text=u"Государственное казенное учреждение здравоохранения города Москвы «Десткая городская психоневрологическая больница № 32 Департамента здравоохранения города Москвы»")
     name = fields.CharField(u"Наименование", max_length=1024, help_text=u"ГКУЗ «Десткая городская психоневрологическая больница № 32»")
-    short_name = fields.CharField(u"Наименование", max_length=1024, help_text=u"ДГПНБ № 32")
+    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"ДГПНБ № 32")
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
 

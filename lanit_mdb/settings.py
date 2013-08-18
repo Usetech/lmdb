@@ -1,3 +1,4 @@
+# coding=utf-8
 # Django settings for lanit_mdb project.
 
 DEBUG = True
@@ -103,6 +104,12 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
+from django.conf.global_settings import TEMPLATE_CONTEXT_PROCESSORS as TCP
+
+TEMPLATE_CONTEXT_PROCESSORS = TCP + (
+    'django.core.context_processors.request',
+)
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -133,7 +140,8 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'south',
-    'grappelli',
+    'suit',
+    #'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -175,4 +183,14 @@ LOGGING = {
             'propagate': True,
         },
     }
+}
+
+
+SUIT_CONFIG = {
+    'ADMIN_NAME': u'Мед. учреждения',
+    'CONFIRM_UNSAVED_CHANGES': True,
+    'MENU': (
+        {'app': 'auth', 'label': u'Пользователи', 'icon':'icon-lock'},
+        {'app': 'core', 'label': u'Медучреждения', 'icon':'icon-plus'}
+    )
 }

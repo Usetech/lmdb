@@ -2,6 +2,7 @@
 import codecs
 import csv
 from optparse import make_option
+from sys import stderr
 from django.core.management import BaseCommand
 from django.utils import timezone
 from core.models import StreetObject, DistrictObject, AddressObject
@@ -18,7 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) == 0:
-            sys.stderr.writelines("No files\n")
+            stderr.writelines("No files\n")
             return
         print options
         encoding = options['encoding']
@@ -55,7 +56,7 @@ class Command(BaseCommand):
                 housing = index
             elif item == u"Строение номер":
                 building = index
-            index = index + 1
+            index += 1
         if id == -1 or district_id == -1 or street_id == -1 or house == -1 or housing == -1 or building == -1:
             raise Exception("Invalid file headers")
         return id, district_id, street_id, house, housing, building
@@ -63,30 +64,43 @@ class Command(BaseCommand):
 
     def import_data(self, reader, encoding):
         _id, _district_id, _street_id, _house, _housing, _building = self.parse_header(reader.next(), encoding)
+        counter = 0
+        updated = 0
+        created = 0
         for row in reader:
             id = int(row[_id])
             district_id = int(row[_district_id])
             street_id = int(row[_street_id])
+            house_letter = None
             house = row[_house].decode(encoding)
             housing = row[_housing].decode(encoding)
             building = row[_building].decode(encoding)
-            print id, district_id, street_id, house, housing, building
-            district = DistrictObject.objects.get(pk=district_id)
-            street = StreetObject.objects.get(pk=street_id)
-            print district.name, street.name
-            address = AddressObject();
-            address.bsi_id = id
-            address.district = district
-            address.street = street
-            address.house = house
+
             if len(housing) == 1 and housing.isalpha():
-                address.house_letter = housing.upper()
-                address.housing = ''
+                house_letter = housing.upper()
+                housing = ''
             else:
-                address.house_letter = ''
-                address.housing = housing
-            address.building = building
-            address.created_at = timezone.localtime(timezone.now(), timezone.get_current_timezone())
-            address.save()
+                house_letter = ''
+
+            address, new_created = AddressObject.objects.get_or_create(
+                bsi_id=id,
+                defaults={
+                    'house': house,
+                    'house_letter': house_letter,
+                    'housing': housing,
+                    'building': building,
+                    'street_id': street_id,
+                    'district_id': district_id,
+                    'created_at': timezone.now()
+                }
+            )
+            if new_created:
+                created += 1
+            else:
+                updated += 1
+
+            counter += 1
+            if counter % 100 == 0:
+                print "Updated: %d; Created: %d" % (updated, created)
 
 
