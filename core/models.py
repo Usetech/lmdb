@@ -5,10 +5,9 @@ from django.db import models
 
 # Create your models here.
 from django.db.models import fields
+from core.validators import ogrn_validator, inn_validator
 
-phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123 45 67")
-ogrn_validator = RegexValidator(regex="[1-3,5]\d{12}", message=u"ОГРН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Основной_государственный_регистрационный_номер")
-inn_validator = RegexValidator(regex="\d{12}", message=u"ИНН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Идентификационный_номер_налогоплательщика")
+phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123-45-67")
 
 
 class BaseModel(models.Model):
@@ -75,14 +74,13 @@ class StreetObject(BaseModel):
 
 
 class DistrictObject(NamedModel):
-
     class Meta:
         verbose_name = u"административный округ"
         verbose_name_plural = u"административные округа"
 
 
 class AddressObject(BaseModel):
-    bsi_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=False, blank=False, unique=True,db_index=True)
+    bsi_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=False, blank=False, unique=True, db_index=True)
     zip_code = fields.CharField(u"Индекс", max_length=6)
     area = fields.CharField(u"Область", max_length=128)
     district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=False)
@@ -95,7 +93,7 @@ class AddressObject(BaseModel):
     building = fields.CharField(u"Строение", max_length=16, null=False, blank=True)
     full_address_string = fields.CharField(u"Полная адресная строка", max_length=512, null=True, blank=True, db_index=True)
 
-    def street_full(self):
+    def full_string(self):
         house = u""
         if self.house:
             house = u"д. %s%s " % (self.house, self.house_letter)
@@ -108,15 +106,16 @@ class AddressObject(BaseModel):
         if self.building:
             building = u"стр. %s " % self.building
         return u"%s %s %s %s" % (self.street.name, house, housing, building)
-    street_full.short_description = u"Полное наименование"
+
+    full_string.short_description = u"Полное наименование"
 
     def __unicode__(self):
-        return self.street_full()
+        return self.full_string()
 
     class Meta:
         verbose_name = u"адрес"
         verbose_name_plural = u"адреса"
-        index_together = [['house', 'house_letter', 'housing', 'building', 'street'],]
+        index_together = [['house', 'house_letter', 'housing', 'building', 'street'], ]
 
 
 SEX_CHOICE = (
@@ -142,17 +141,17 @@ class LegalEntity(ChiefModelMixin):
     """
     Юридические лица
     """
-    name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава")
-    ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True, help_text=u"Основной государственный регистрационный номер")
-    inn_code = fields.CharField(u"ИНН", max_length=256,
-                                validators=[RegexValidator(regex="\d+", message=u"ИНН может содержать только цифры")], null=True)
-    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, related_name='registered_entities')
+    name = fields.CharField(u"Наименование", max_length=128, help_text=u"Наименование юр. лица из устава")
+    ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
+                                 help_text=u"Основной государственный регистрационный номер")
+    inn_code = fields.CharField(u"ИНН", max_length=256, validators=[inn_validator], null=True, blank=True)
+    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities', null=True, blank=True)
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
 
-    errors = models.TextField(u"Ошибки импорта", null= True, blank=True)
+    errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
 
     def __unicode__(self):
         return self.name

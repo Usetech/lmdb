@@ -74,7 +74,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = os.path.join(PROJECT_ROOT, "static")
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -154,7 +154,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'core',
-    'guardian'
+    'guardian',
+    'raven.contrib.django.raven_compat',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -164,26 +165,44 @@ INSTALLED_APPS = (
 # more details on how to customize your logging configuration.
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
+    'disable_existing_loggers': True,
+    'root': {
+        'level': 'WARNING',
+        'handlers': ['sentry'],
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
     },
     'handlers': {
-        'mail_admins': {
+        'sentry': {
             'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
+        'django.db.backends': {
             'level': 'ERROR',
-            'propagate': True,
+            'handlers': ['console'],
+            'propagate': False,
         },
-    }
+        'raven': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'sentry.errors': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+    },
 }
 
 
@@ -191,15 +210,16 @@ SUIT_CONFIG = {
     'ADMIN_NAME': u'Мед. учреждения',
     'CONFIRM_UNSAVED_CHANGES': True,
     'MENU': (
-        # Rename app and set icon
-        {'app': 'auth', 'label': u'Пользователи', 'icon':'icon-lock'},
-
-        # Reorder app models
-        {'app': 'auth', 'label': u'Пользователи2', 'models': ('user', 'group')},
         {'app': 'core',
          'label': u'Медучреждения',
          'icon':'icon-plus',
          'models': ('legalentity', 'healingobject', 'service', 'addressobject')
-        }
+        },
+        # Rename app and set icon
+        {'app': 'auth', 'label': u'Пользователи', 'icon':'icon-lock'}
     )
+}
+
+RAVEN_CONFIG = {
+    'dsn': 'http://94f5ae379506448f973e956b043ced37:485379956a9b4752a50590a57a2abc78@uat.geconn.ru:11000/16',
 }
