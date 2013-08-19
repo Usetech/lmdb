@@ -63,6 +63,7 @@ class ServiceType(NamedModel):
 class StreetObject(BaseModel):
     name = fields.CharField(u"Наименование", max_length=128)
     type = fields.CharField(u"Тип топонима", max_length=128)
+    iname = fields.CharField(u"Название для поиска, сортировки", max_length=256)
     valid = fields.BooleanField(u"Действующее название улицы", null=False, default=True)
 
     def __unicode__(self):
@@ -148,6 +149,8 @@ class LegalEntity(ChiefModelMixin):
 
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
 
+    errors = models.TextField(u"Ошибки импорта", null= True, blank=True)
+
     def __unicode__(self):
         return self.name
 
@@ -204,6 +207,7 @@ class HealingObject(BaseModel):
     short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"ДГПНБ № 32")
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
+    errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
 
     def __unicode__(self):
         return self.name
