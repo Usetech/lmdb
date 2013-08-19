@@ -215,7 +215,7 @@ SUIT_CONFIG = {
         {'app': 'core',
          'label': u'Медучреждения',
          'icon':'icon-plus',
-         'models': ('legalentity', 'healingobject', 'service', 'addressobject')
+         'models': ('legalentity', 'healingobject', 'service', 'addressobject', 'healthobjectype', 'servicetype')
         },
         # Rename app and set icon
         {'app': 'auth', 'label': u'Пользователи', 'icon':'icon-lock'}
