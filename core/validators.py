@@ -7,6 +7,7 @@ __author__ = 'pparkhomenko'
 
 __ogrn_regexp = re.compile(r"^([1-3,5]\d{11})(\d)$")
 __ogrn_error_message = u"ОГРН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Основной_государственный_регистрационный_номер"
+
 def ogrn_validator(value):
     result = __ogrn_regexp.match(value)
     if (result != None):
@@ -19,34 +20,35 @@ __jur_inn_coefficients = [2, 4, 10, 3, 5, 9, 4, 6, 8]
 __fiz_inn_coefficients1 = [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 __fiz_inn_coefficients2 = [3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 __inn_error_message = u"ИНН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Идентификационный_номер_налогоплательщика"
+
 def inn_validator(value):
     if not value.isdigit():
         raise ValidationError(__inn_error_message)
-    if (len(value) == 10):
+    if len(value) == 10:
         index = 0
         checksum = 0
         for digit in value:
             digit = int(digit)
-            if (index < 9):
-                checksum = checksum + __jur_inn_coefficients[index] * digit
+            if index < 9:
+                checksum += __jur_inn_coefficients[index] * digit
             else:
                 return __validate_checksum(checksum, digit, __inn_error_message)
-            index = index + 1
-    elif (len(value) == 12):
+            index += 1
+    elif len(value) == 12:
         index = 0
         checksum1 = 0
         checksum2 = 0
         for digit in value:
             digit = int(digit)
             if index < 10:
-                checksum1 = checksum1 + __fiz_inn_coefficients1[index] * digit
-                checksum2 = checksum2 + __fiz_inn_coefficients2[index] * digit
+                checksum1 += __fiz_inn_coefficients1[index] * digit
+                checksum2 += __fiz_inn_coefficients2[index] * digit
             elif index == 10:
                 __validate_checksum(checksum1, digit, __inn_error_message)
-                checksum2 = checksum2 + __fiz_inn_coefficients2[index] * digit
+                checksum2 += __fiz_inn_coefficients2[index] * digit
             else:
                 return __validate_checksum(checksum2, digit, __inn_error_message)
-            index = index + 1
+            index += 1
     raise ValidationError(__inn_error_message)
 
 def __validate_checksum(checksum, expected, message):

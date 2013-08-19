@@ -10,26 +10,47 @@ from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType,
 
 __author__ = 'sergio'
 
+chief_fields = (
+    u"Руководитель ",
+    {
+        'classes': ('suit-tab suit-tab-general',),
+        'fields': (
+            ("chief_original_name",),
+            ("chief_sex", "chief_position"),
+        )
+    }
+)
+
 
 class InfoForm(ModelForm):
     class Meta:
         widgets = {
             'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+        }
+
+
+class HealingObjectForm(ModelForm):
+    class Meta:
+        widgets = {
+            'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             'full_name': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xxlarge'}),
-            'name': TextInput(attrs={'class': 'input-xxlarge'})
+            'name': TextInput(attrs={'class': 'input-xxlarge'}),
+            'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
         }
 
 
 class ServiceForm(InfoForm):
     class Meta:
         widgets = {
-            'phone':EnclosedInput(prepend='icon-headphones'),
-            'fax':EnclosedInput(prepend='icon-print'),
-            'site_url':EnclosedInput(prepend='icon-globe'),
+            'phone': EnclosedInput(prepend='icon-headphones'),
+            'fax': EnclosedInput(prepend='icon-print'),
+            'site_url': EnclosedInput(prepend='icon-globe'),
             'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             'specialization': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'})
+            'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+            'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
         }
+
 
 class NamedModelForm(ModelForm):
     class Meta:
@@ -37,6 +58,12 @@ class NamedModelForm(ModelForm):
             'name': TextInput(attrs={'class': 'input-xxlarge'})
         }
 
+
+class LegalEntityForm(ModelForm):
+    class Meta:
+        widgets = {
+            'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
+        }
 
 class BaseModelAdmin(admin.ModelAdmin):
     model = BaseModel
@@ -88,7 +115,7 @@ class AddressObjectAdmin(BaseModelAdmin):
             }
         ),
     )
-    list_display = ('district', 'street', 'house', 'house_letter', 'housing', 'building', 'street_full')
+    list_display = ('district', 'street', 'house', 'house_letter', 'housing', 'building', 'full_address_string')
 
 
 class HealingObjectServiceInline(admin.StackedInline):
@@ -100,6 +127,8 @@ class HealingObjectServiceInline(admin.StackedInline):
         ('phone', ),
         ('fax',),
         ('site_url',),
+        ('chief_original_name',),
+        ('chief_sex', 'chief_position',),
         ('info',),
         ('workdays', 'workhours'),
         ('daysoff', 'daysoff_restrictions'),
@@ -119,6 +148,7 @@ class HealingObjectServiceInline(admin.StackedInline):
 
 class HealingObjectInline(admin.StackedInline):
     model = HealingObject
+    form = HealingObjectForm
     raw_id_fields = ('address',)
     related_lookup_fields = {
         'fk': ['address']
@@ -127,7 +157,8 @@ class HealingObjectInline(admin.StackedInline):
         ('object_type',),
         ('address', ),
         ('full_name',),
-        ('name', 'short_name'),
+        ('name',),
+        ('short_name',),
         ('global_id',),
         ('info', )
     )
@@ -137,6 +168,7 @@ class HealingObjectInline(admin.StackedInline):
 
 class LegalEntityAdmin(BaseGuardedModelAdmin):
     model = LegalEntity
+    form = LegalEntityForm
     date_hierarchy = "modified_at"
     search_fields = ('name',)
     list_display = ("name", "chief_first_name", "jur_address",) + BaseModelAdmin.list_display
@@ -160,18 +192,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
                 )
             }
         ),
-        (
-            u"Руководитель ",
-            {
-                'classes': ('suit-tab suit-tab-general',),
-                'fields': (
-                    ("chief_last_name",),
-                    ("chief_first_name",),
-                    ("chief_middle_name",),
-                    ("chief_sex", "chief_speciality"),
-                )
-            }
-        )
+        chief_fields
     )
     inlines = [HealingObjectInline]
 
@@ -240,6 +261,7 @@ class ServiceAdmin(BaseModelAdmin):
                 )
             }
         ),
+        chief_fields,
         (
             u"Информация по услуге",
             {
@@ -260,7 +282,7 @@ class ServiceAdmin(BaseModelAdmin):
 
 class HealingObjectAdmin(BaseModelAdmin):
     model = HealingObject
-    form = InfoForm
+    form = HealingObjectForm
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
     raw_id_fields = ('address',)
     fieldsets = BaseModelAdmin.fieldsets_tab + (

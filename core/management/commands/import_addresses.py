@@ -71,7 +71,6 @@ class Command(BaseCommand):
             id = int(row[_id])
             district_id = int(row[_district_id])
             street_id = int(row[_street_id])
-            house_letter = None
             house = row[_house].decode(encoding)
             housing = row[_housing].decode(encoding)
             building = row[_building].decode(encoding)
@@ -94,6 +93,10 @@ class Command(BaseCommand):
                     'created_at': timezone.now()
                 }
             )
+            if not address.full_address_string:
+                address.full_address_string = address.full_string()
+                address.save()
+
             if new_created:
                 created += 1
             else:
