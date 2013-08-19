@@ -5,7 +5,8 @@ import csv
 from optparse import make_option
 from sys import stderr
 from django.core.management import BaseCommand
-from core.models import HealthObjectType, StreetObject, AddressObject, LegalEntity, HealingObject
+from core.management.commands.mappings import object_type_to_service_type
+from core.models import HealthObjectType, StreetObject, AddressObject, LegalEntity, HealingObject, Service, ServiceType
 
 
 __author__ = 'pparkhomenko'
@@ -213,6 +214,34 @@ class Command(BaseCommand):
             mu.info = row[header["INFO"]].decode(encoding)
             mu.errors = error
             mu.save()
+
+            service = Service()
+            service.healing_object = mu
+            service_type_name = object_type_to_service_type[hotype.name]
+            service.service = ServiceType.objects.get(name=service_type_name)
+            self.fill_chief_data(header, row, service, counter + 3, encoding)
+            service.phone = row[header["TEL_NOMER"]].decode(encoding)
+            service.fax = row[header["FAX_NOMER"]].decode(encoding)
+            service.info = row[header["INFO"]].decode(encoding)
+            service.workdays = row[header["DNY_RABOTY1"]].decode(encoding)
+            service.workhours = row[header["CHAS_RABOTY"]].decode(encoding)
+            service.daysoff = row[header["DNY_NE_RABOT"]].decode(encoding)
+            service.daysoff_restrictions = row[header["VYHODNOJ_TYPE"]].decode(encoding)
+            service.specialization = row[header["SPECIAL"]].decode(encoding)
+            service.paid_services = row[header["PLAT_USLUGI"]].decode(encoding)
+            service.free_services = row[header["BESPL_USLUGI"]].decode(encoding)
+            service.drug_provisioning = row[header["LEK_OBESP"]].decode(encoding)
+            service.departments = row[header["OTDELENIE"]].decode(encoding)
+            service.hospital_levels = row[header["LVL"]].decode(encoding)
+            service.tour = row[header["SMENA"]].decode(encoding)
+            service.receipes_provisioning = row[header["RECEPT"]].decode(encoding)
+            service.aptheke_type = row[header["DRUGSTORE_TYPE"]].decode(encoding)
+            beds = row[header["KOIKI"]].decode(encoding)
+            if len(beds) == 0:
+                beds = row[header["KOJKA"]].decode(encoding)
+                if len(beds) == 0:
+                    beds = row[header["KOIKA"]].decode(encoding)
+            service.hospital_beds = beds
 
             counter += 1
 
