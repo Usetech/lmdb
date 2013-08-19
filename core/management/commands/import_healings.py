@@ -27,13 +27,14 @@ class Command(BaseCommand):
         print "Importing healings from " + filename
         csvfile = open(filename, "rb")
         reader = csv.reader(csvfile, delimiter=';')
+        print "Importing Legal Entities..."
         lemap = self.import_le_data(reader, encoding)
         csvfile.close()
         csvfile = open(filename, "rb")
+        print "Importing Healings..."
         reader = csv.reader(csvfile, delimiter=';')
         self.import_mu_data(lemap, reader, encoding)
         csvfile.close()
-
 
     def parse_header(self, header, encoding):
         parsed = {}
@@ -47,7 +48,6 @@ class Command(BaseCommand):
             index += 1
         print parsed
         return parsed
-
 
     def get_address(self, header, row, streets, encoding, number):
         house = row[header["ADRES_DOM"]].decode(encoding)
@@ -114,6 +114,8 @@ class Command(BaseCommand):
         unknown_addresses = 0
         legal_entities = {}
         for row in reader:
+            print "Processing line %d" % counter
+            counter += 1
             lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
@@ -123,13 +125,13 @@ class Command(BaseCommand):
             street = row[header["ADRES_UL_NAME"]].decode(encoding)
             address = None
             if len(street) == 0:
-                stderr.write(u"Empty street at %d\n" % (counter + 3,))
+                # stderr.write(u"Empty street at %d\n" % (counter + 3,))
                 empty_streets += 1
                 unknown_addresses += 1
             else:
                 streets = StreetObject.objects.all().filter(name=street)
                 if len(streets) == 0:
-                    stderr.write(u"Unknown street at %d\n" % (counter + 3,))
+                    # stderr.write(u"Unknown street at %d\n" % (counter + 3,))
                     error = u"Улица не найдена: " + street
                     unknown_streets += 1
                     unknown_addresses += 1
@@ -146,8 +148,6 @@ class Command(BaseCommand):
             le.errors = error
             le.save()
             legal_entities[lpu] = le
-
-            counter += 1
 
         print "Total: %d" % (counter,)
         print "Unknown addresses: %d" % (unknown_addresses,)
