@@ -141,7 +141,7 @@ class LegalEntity(ChiefModelMixin):
     """
     Юридические лица
     """
-    name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава")
+    name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава", unique=True)
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
     inn_code = fields.CharField(u"ИНН", max_length=256, validators=[inn_validator], null=True, blank=True)

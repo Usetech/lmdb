@@ -120,7 +120,7 @@ class Command(BaseCommand):
             lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
-            elif legal_entities.has_key(lpu):
+            if legal_entities.has_key(lpu):
                 continue
 
             street = row[header["ADRES_UL_NAME"]].decode(encoding)
@@ -242,6 +242,7 @@ class Command(BaseCommand):
                 if len(beds) == 0:
                     beds = row[header["KOIKA"]].decode(encoding)
             service.hospital_beds = beds
+            service.save()
 
             counter += 1
 
