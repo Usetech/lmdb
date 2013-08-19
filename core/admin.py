@@ -284,6 +284,7 @@ class ServiceAdmin(BaseModelAdmin):
 class HealingObjectAdmin(BaseModelAdmin):
     model = HealingObject
     form = HealingObjectForm
+    list_filter = ('object_type',)
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
     raw_id_fields = ('address', 'parent')
     readonly_fields = ('errors', )
