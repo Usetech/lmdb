@@ -64,7 +64,7 @@ class StreetObject(BaseModel):
     name = fields.CharField(u"Наименование", max_length=128)
     type = fields.CharField(u"Тип топонима", max_length=128)
     iname = fields.CharField(u"Название для поиска, сортировки", max_length=256)
-    valid = fields.BooleanField(u"Действующее название улицы", null=False, default=True)
+    valid = fields.BooleanField(u"Действующее", null=False, default=True)
 
     def __unicode__(self):
         return self.name
@@ -93,6 +93,7 @@ class AddressObject(BaseModel):
     house_letter = fields.CharField(u"буква", max_length=1, null=False, blank=True)
     housing = fields.CharField(u"Корпус", max_length=16, null=False, blank=True)
     building = fields.CharField(u"Строение", max_length=16, null=False, blank=True)
+    full_address_string = fields.CharField(u"Полная адресная строка", max_length=512, null=True, blank=True, db_index=True)
 
     def street_full(self):
         house = u""
@@ -208,6 +209,7 @@ class HealingObject(BaseModel):
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
+    parent = models.ForeignKey('self', related_name='branches', null=True, blank=True)
 
     def __unicode__(self):
         return self.name
