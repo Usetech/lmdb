@@ -42,7 +42,8 @@ class Command(BaseCommand):
             key = item.decode(encoding)
             if parsed.has_key(key):
                 raise Exception("Duplicate key in header: " + key)
-            parsed[str(item)] =  index
+            parsed[key] =  index
+            print "# " + str(index) + " : " + key
             index += 1
         print parsed
         return parsed
@@ -52,6 +53,7 @@ class Command(BaseCommand):
         house_letter = row[header["ADRES_DOM_litera"]].decode(encoding).upper()
         housing = row[header["ADRES_KORPUS"]].decode(encoding)
         building = row[header["ADRES_STROENIE"]].decode(encoding)
+
         addresses = self.get_addresses(streets, house, house_letter, housing, building)
         if len(addresses) == 0 and len(housing) > 0:
             addresses = self.get_addresses(streets, house + '/' + housing, house_letter, '', building)

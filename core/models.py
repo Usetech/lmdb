@@ -126,11 +126,12 @@ SEX_CHOICE = (
 
 
 class ChiefModelMixin(BaseModel):
+    chief_original_name = fields.TextField(u"Ф.И.О. руководителя", blank=True, null=True)
     chief_first_name = fields.CharField(u"Имя руководителя", max_length=256, blank=True, null=True)
     chief_middle_name = fields.CharField(u"Отчество руководителя", max_length=256, blank=True, null=True)
     chief_last_name = fields.CharField(u"Фамилия руководителя", max_length=256, blank=True, null=True)
     chief_sex = fields.CharField(u"Пол руководителя", max_length=1, choices=SEX_CHOICE, blank=True, null=True)
-    chief_speciality = models.ForeignKey(Position, verbose_name=u"Специальность руководителя", blank=True, null=True)
+    chief_position = models.ForeignKey(Position, verbose_name=u"Должность руководителя", blank=True, null=True)
     chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True, validators=[phone_validator])
 
     class Meta:
@@ -147,6 +148,7 @@ class LegalEntity(ChiefModelMixin):
                                 validators=[RegexValidator(regex="\d+", message=u"ИНН может содержать только цифры")])
     jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
+    original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
 
@@ -201,6 +203,7 @@ class HealingObject(BaseModel):
     object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
     legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=True)
     address = models.ForeignKey(AddressObject, verbose_name=u"Адрес")
+    original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     full_name = fields.CharField(u"Полное наименование", max_length=2048,
                                  help_text=u"Государственное казенное учреждение здравоохранения города Москвы «Десткая городская психоневрологическая больница № 32 Департамента здравоохранения города Москвы»")
