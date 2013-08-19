@@ -287,7 +287,7 @@ class HealingObjectAdmin(BaseModelAdmin):
     list_filter = ('object_type',)
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
     raw_id_fields = ('address', 'parent')
-    readonly_fields = ('errors', )
+    readonly_fields = ('errors', 'original_address')
     fieldsets = BaseModelAdmin.fieldsets_tab + (
         (
             u"Основные параметры",
@@ -302,7 +302,8 @@ class HealingObjectAdmin(BaseModelAdmin):
                     ('short_name',),
                     ('global_id',),
                     ('info', ),
-                    ('errors', )
+                    ('errors', ),
+                    ('original_address', )
                 )
             }
         ),

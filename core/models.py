@@ -152,10 +152,10 @@ class LegalEntity(ChiefModelMixin):
     name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава", unique=True)
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
-    inn_code = fields.CharField(u"ИНН", max_length=256
+    inn_code = fields.CharField(u"ИНН", max_length=256, null=True, blank=True
     #    , validators=[inn_validator]
     )
-    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities')
+    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, blank=True, related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
@@ -190,7 +190,7 @@ class Service(ChiefModelMixin):
     free_services = models.CharField(u"Бесплатные услуги", max_length=1024, null=True, blank=True)
     drug_provisioning = models.CharField(u"Лекарственное обеспечение", max_length=1024, null=True, blank=True)
     hospital_beds = models.CharField(u"Койкофонд", max_length=256, null=True, blank=True)
-    departments = models.CharField(u"Перечень отделений", max_length=1024, null=True, blank=True)
+    departments = models.TextField(u"Перечень отделений", null=True, blank=True)
     hospital_levels = models.CharField(u"Уровень стационара", max_length=1024, null=True, blank=True)
     tour = models.CharField(u"Смена", max_length=1024, null=True, blank=True)
     receipes_provisioning = models.CharField(u"Обеспечение рецептов", max_length=1024, null=True, blank=True)
