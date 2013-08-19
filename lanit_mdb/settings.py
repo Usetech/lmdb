@@ -191,7 +191,15 @@ SUIT_CONFIG = {
     'ADMIN_NAME': u'Мед. учреждения',
     'CONFIRM_UNSAVED_CHANGES': True,
     'MENU': (
+        # Rename app and set icon
         {'app': 'auth', 'label': u'Пользователи', 'icon':'icon-lock'},
-        {'app': 'core', 'label': u'Медучреждения', 'icon':'icon-plus'}
+
+        # Reorder app models
+        {'app': 'auth', 'label': u'Пользователи2', 'models': ('user', 'group')},
+        {'app': 'core',
+         'label': u'Медучреждения',
+         'icon':'icon-plus',
+         'models': ('legalentity', 'healingobject', 'service', 'addressobject')
+        }
     )
 }
