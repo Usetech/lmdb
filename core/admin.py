@@ -65,6 +65,7 @@ class LegalEntityForm(ModelForm):
             'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
         }
 
+
 class BaseModelAdmin(admin.ModelAdmin):
     model = BaseModel
     base_fields = ("created_at", "modified_at", "deleted_at")
