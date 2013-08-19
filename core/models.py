@@ -141,7 +141,7 @@ class LegalEntity(ChiefModelMixin):
     """
     Юридические лица
     """
-    name = fields.CharField(u"Наименование", max_length=128, help_text=u"Наименование юр. лица из устава")
+    name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава")
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
     inn_code = fields.CharField(u"ИНН", max_length=256, validators=[inn_validator], null=True, blank=True)
@@ -201,7 +201,7 @@ class HealingObject(BaseModel):
     """
     object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
     legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=True)
-    address = models.ForeignKey(AddressObject, verbose_name=u"Адрес")
+    address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True)
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     full_name = fields.CharField(u"Полное наименование", max_length=2048,

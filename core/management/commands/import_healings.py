@@ -92,7 +92,7 @@ class Command(BaseCommand):
 
     def fill_chief_data(self, header, row, data, number, encoding):
         data.chief_original_name = row[header["RUKOVODIT"]].decode(encoding)
-        sex = str(row[header["R_POL"]].decode(encoding)).lower()
+        sex = row[header["R_POL"]].decode(encoding).lower()
         if sex == u"муж" or sex == u"м":
             data.chief_sex = 'M'
         elif sex == u"жен" or sex == u"ж":
@@ -154,6 +154,8 @@ class Command(BaseCommand):
         print "Empty streets: %d" % (empty_streets,)
         print "Unknown streets: %d" % (unknown_streets,)
 
+        return legal_entities
+
 
 
     def import_mu_data(self, legal_entities, reader, encoding):
@@ -201,7 +203,7 @@ class Command(BaseCommand):
             mu = HealingObject()
             mu.object_type = hotype
             mu.legal_entity = lpu
-            self.fill_chief_data(header, row, mu, counter + 3, encoding)
+            #self.fill_chief_data(header, row, mu, counter + 3, encoding)
             mu.address = address
             mu.original_address = row[header["ADRES_STR"]].decode(encoding)
             mu.name = row[header["NAME"]].decode(encoding)
