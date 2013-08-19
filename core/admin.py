@@ -295,6 +295,7 @@ class HealingObjectAdmin(BaseModelAdmin):
                 'classes': ('suit-tab suit-tab-general',),
                 'fields': (
                     ('parent',),
+                    ('legal_entity',),
                     ('object_type',),
                     ('address', ),
                     ('full_name',),
