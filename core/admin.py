@@ -172,7 +172,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
     form = LegalEntityForm
     date_hierarchy = "modified_at"
     search_fields = ('name',)
-    list_display = ("name", "chief_first_name", "jur_address",) + BaseModelAdmin.list_display
+    list_display = ("name", "chief_original_name",) + BaseModelAdmin.list_display
     raw_id_fields = ('jur_address', 'fact_address')
     related_lookup_fields = {
         'fk': ['jur_address', 'fact_address']
@@ -285,26 +285,29 @@ class HealingObjectAdmin(BaseModelAdmin):
     model = HealingObject
     form = HealingObjectForm
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
-    raw_id_fields = ('address',)
+    raw_id_fields = ('address', 'parent')
+    readonly_fields = ('errors', )
     fieldsets = BaseModelAdmin.fieldsets_tab + (
         (
             u"Основные параметры",
             {
                 'classes': ('suit-tab suit-tab-general',),
                 'fields': (
+                    ('parent',),
                     ('object_type',),
                     ('address', ),
                     ('full_name',),
                     ('name', ),
                     ('short_name',),
                     ('global_id',),
-                    ('info', )
+                    ('info', ),
+                    ('errors', )
                 )
             }
         ),
     )
     search_fields = ('object_type__name', 'name', 'address__street__name')
-    list_display = ('object_type', 'name', 'address', 'created_at', 'modified_at', 'deleted_at')
+    list_display = ('object_type', 'name', 'address', 'created_at', 'modified_at', 'deleted_at', 'errors')
     inlines = [HealingObjectServiceInline]
 
 

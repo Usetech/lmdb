@@ -11,12 +11,20 @@ phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"
 
 
 class BaseModel(models.Model):
-    created_at = fields.DateTimeField(u"Дата создания", auto_now_add=True)
-    modified_at = fields.DateTimeField(u"Дата изменения", auto_now=True)
+    created_at = fields.DateTimeField(u"Дата создания")
+    modified_at = fields.DateTimeField(u"Дата изменения")
     deleted_at = fields.DateTimeField(u"Дата удаления", null=True, blank=True)
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        """On save, update timestamps"""
+        # Этот код не удалять, auto_now и т.п. ведут к проблемам в админке
+        if not self.id:
+            self.created_at = datetime.datetime.today()
+        self.modified_at = datetime.datetime.today()
+        return super(BaseModel, self).save(*args, **kwargs)
 
 
 class NamedModel(BaseModel):
@@ -144,8 +152,10 @@ class LegalEntity(ChiefModelMixin):
     name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава", unique=True)
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
-    inn_code = fields.CharField(u"ИНН", max_length=256, validators=[inn_validator], null=True, blank=True)
-    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities', null=True, blank=True)
+    inn_code = fields.CharField(u"ИНН", max_length=256
+    #    , validators=[inn_validator]
+    )
+    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
@@ -201,7 +211,7 @@ class HealingObject(BaseModel):
     """
     object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
     legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=True)
-    address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True)
+    address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True, blank=True)
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     full_name = fields.CharField(u"Полное наименование", max_length=2048,
@@ -211,7 +221,7 @@ class HealingObject(BaseModel):
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
-    parent = models.ForeignKey('self', related_name='branches', null=True, blank=True)
+    parent = models.ForeignKey('self', related_name='branches', null=True, blank=True, verbose_name=u"Главное ЛПУ")
 
     def __unicode__(self):
         return self.name
