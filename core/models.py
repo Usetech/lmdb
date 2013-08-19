@@ -5,14 +5,15 @@ from django.db import models
 
 # Create your models here.
 from django.db.models import fields
+from django.utils import timezone
 from core.validators import ogrn_validator, inn_validator
 
 phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123-45-67")
 
 
 class BaseModel(models.Model):
-    created_at = fields.DateTimeField(u"Дата создания")
-    modified_at = fields.DateTimeField(u"Дата изменения")
+    created_at = fields.DateTimeField(u"Дата создания", default=timezone.now)
+    modified_at = fields.DateTimeField(u"Дата изменения", default=timezone.now)
     deleted_at = fields.DateTimeField(u"Дата удаления", null=True, blank=True)
 
     class Meta:
@@ -139,7 +140,9 @@ class ChiefModelMixin(BaseModel):
     chief_last_name = fields.CharField(u"Фамилия руководителя", max_length=256, blank=True, null=True)
     chief_sex = fields.CharField(u"Пол руководителя", max_length=1, choices=SEX_CHOICE, blank=True, null=True)
     chief_position = models.ForeignKey(Position, verbose_name=u"Должность руководителя", blank=True, null=True)
-    chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True, validators=[phone_validator])
+    chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True
+    #    , validators=[phone_validator]
+    )
 
     class Meta:
         abstract = True
@@ -150,6 +153,7 @@ class LegalEntity(ChiefModelMixin):
     Юридические лица
     """
     name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава", unique=True)
+    original_name = fields.CharField(u"Наименование (исх.)", max_length=256, null=True, blank=True)
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
     inn_code = fields.CharField(u"ИНН", max_length=256, null=True, blank=True
@@ -177,8 +181,8 @@ class Service(ChiefModelMixin):
     """
     healing_object = models.ForeignKey('HealingObject', verbose_name=u"Объект здравоохранения", related_name='services')
     service = models.ForeignKey(ServiceType, related_name='healing_objects', verbose_name=u"Услуга")
-    phone = models.CharField(u"Телефон", max_length=256, validators=[phone_validator], blank=True, null=True)
-    fax = models.CharField(u"Факс", max_length=256, validators=[phone_validator], null=True, blank=True)
+    phone = models.CharField(u"Телефон", max_length=256, blank=True, null=True)
+    fax = models.CharField(u"Факс", max_length=256, null=True, blank=True)
     site_url = models.URLField(u"Адрес сайта", max_length=1024, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     workdays = models.CharField(u"Рабочие дни", max_length=128, blank=True, null=True)
@@ -187,7 +191,7 @@ class Service(ChiefModelMixin):
     daysoff_restrictions = models.CharField(u"Ограничения выходных дней", null=True, blank=True, max_length=256)
     specialization = models.TextField(u"Специализация", null=True, blank=True)
     paid_services = models.CharField(u"Платные услуги", max_length=1024, null=True, blank=True)
-    free_services = models.CharField(u"Бесплатные услуги", max_length=1024, null=True, blank=True)
+    free_services = models.TextField(u"Бесплатные услуги", null=True, blank=True)
     drug_provisioning = models.CharField(u"Лекарственное обеспечение", max_length=1024, null=True, blank=True)
     hospital_beds = models.CharField(u"Койкофонд", max_length=256, null=True, blank=True)
     departments = models.TextField(u"Перечень отделений", null=True, blank=True)
@@ -217,7 +221,7 @@ class HealingObject(BaseModel):
     full_name = fields.CharField(u"Полное наименование", max_length=2048,
                                  help_text=u"Государственное казенное учреждение здравоохранения города Москвы «Десткая городская психоневрологическая больница № 32 Департамента здравоохранения города Москвы»")
     name = fields.CharField(u"Наименование", max_length=1024, help_text=u"ГКУЗ «Десткая городская психоневрологическая больница № 32»")
-    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"ДГПНБ № 32")
+    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"ДГПНБ № 32", null=True, blank=True)
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)

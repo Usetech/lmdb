@@ -2,8 +2,11 @@
 
 import codecs
 import csv
+import json
 from optparse import make_option
 from sys import stderr
+from django.core import serializers
+from django.core.exceptions import ValidationError
 from django.core.management import BaseCommand
 from core.management.commands.mappings import object_type_to_service_type
 from core.models import HealthObjectType, StreetObject, AddressObject, LegalEntity, HealingObject, Service, ServiceType
@@ -11,10 +14,11 @@ from core.models import HealthObjectType, StreetObject, AddressObject, LegalEnti
 
 __author__ = 'pparkhomenko'
 
+
 class Command(BaseCommand):
     args = "<filename>"
     help = "Imports csv file with healings to database"
-    option_list = BaseCommand.option_list +\
+    option_list = BaseCommand.option_list + \
                   (make_option("--encoding", dest="encoding", default="cp1251", help="File encoding"),)
 
     def handle(self, *args, **options):
@@ -44,7 +48,7 @@ class Command(BaseCommand):
             key = item.decode(encoding)
             if parsed.has_key(key):
                 raise Exception("Duplicate key in header: " + key)
-            parsed[key] =  index
+            parsed[key] = index
             print "# " + str(index) + " : " + key
             index += 1
         print parsed
@@ -66,7 +70,8 @@ class Command(BaseCommand):
 
         if len(addresses) == 0:
             stderr.write(u"Unknown address at %d\n" % (number,))
-            error = u"Unknown address: " + streets[0].name + u", дом '" + house + u"', литера '" + house_letter + u"', корпус '" + housing + u"', строение '" + building + "'\n"
+            error = u"Unknown address: " + streets[
+                0].name + u", дом '" + house + u"', литера '" + house_letter + u"', корпус '" + housing + u"', строение '" + building + "'\n"
             return None, error
         elif len(addresses) == 1:
             return addresses[0], None
@@ -86,10 +91,9 @@ class Command(BaseCommand):
             error = u"Множество действующих адресов"
         return None, error
 
-
     def get_addresses(self, streets, house, house_letter, housing, building):
-        return AddressObject.objects.all().filter(street__in=streets).filter(house=house).filter(house_letter=house_letter).filter(housing=housing).filter(building=building)
-
+        return AddressObject.objects.all().filter(street__in=streets).filter(house=house).filter(house_letter=house_letter).filter(housing=housing).filter(
+            building=building)
 
     def fill_chief_data(self, header, row, data, number, encoding):
         data.chief_original_name = row[header["RUKOVODIT"]].decode(encoding)
@@ -104,7 +108,6 @@ class Command(BaseCommand):
             data.chief_sex = None
         data.chief_phone = row[header["R_TEL_NOMER"]].decode(encoding)
 
-
     def import_le_data(self, reader, encoding):
         reader.next()
         header = self.parse_header(reader.next(), encoding)
@@ -115,8 +118,9 @@ class Command(BaseCommand):
         unknown_addresses = 0
         legal_entities = {}
         for row in reader:
-            print "Processing line %d" % counter
+            print "Processing row", counter
             counter += 1
+
             lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
@@ -125,6 +129,7 @@ class Command(BaseCommand):
 
             street = row[header["ADRES_UL_NAME"]].decode(encoding)
             address = None
+            error = None
             if len(street) == 0:
                 # stderr.write(u"Empty street at %d\n" % (counter + 3,))
                 empty_streets += 1
@@ -138,16 +143,23 @@ class Command(BaseCommand):
                     unknown_addresses += 1
                 else:
                     address, error = self.get_address(header, row, streets, encoding, counter + 3)
-                    if (address == None):
+                    if not address:
                         unknown_addresses += 1
 
             le = LegalEntity()
             le.name = lpu
+            le.original_name = row[header["NAME"]].decode(encoding)
             self.fill_chief_data(header, row, le, counter + 3, encoding)
             le.fact_address = address
             le.original_address = row[header["ADRES_STR"]].decode(encoding)
             le.errors = error
-            le.save()
+            try:
+                le.clean_fields()
+                le.save()
+            except ValidationError as e:
+                self.show_validation_error("Error validating legal entity object", le, e)
+                raise
+
             legal_entities[lpu] = le
 
         print "Total: %d" % (counter,)
@@ -156,8 +168,6 @@ class Command(BaseCommand):
         print "Unknown streets: %d" % (unknown_streets,)
 
         return legal_entities
-
-
 
     def import_mu_data(self, legal_entities, reader, encoding):
         reader.next()
@@ -170,6 +180,8 @@ class Command(BaseCommand):
         unknown_streets = 0
         unknown_addresses = 0
         for row in reader:
+            print "Processing row", counter
+            counter += 1
             lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
@@ -180,7 +192,7 @@ class Command(BaseCommand):
                 empty_types += 1
                 continue
             hotype, created = HealthObjectType.objects.get_or_create(name=hotype)
-            if (created):
+            if created:
                 created_types += 1
 
             street = row[header["ADRES_UL_NAME"]].decode(encoding)
@@ -198,7 +210,7 @@ class Command(BaseCommand):
                     unknown_addresses += 1
                 else:
                     address, error = self.get_address(header, row, streets, encoding, counter + 3)
-                    if (address == None):
+                    if address is None:
                         unknown_addresses += 1
 
             mu = HealingObject()
@@ -207,13 +219,19 @@ class Command(BaseCommand):
             #self.fill_chief_data(header, row, mu, counter + 3, encoding)
             mu.address = address
             mu.original_address = row[header["ADRES_STR"]].decode(encoding)
-            mu.name = row[header["NAME"]].decode(encoding)
+            name = row[header["NAME"]].decode(encoding)
+            mu.name = name
             mu.short_name = row[header["SHORT_NAME"]].decode(encoding)
-            mu.full_name = row[header["FULL_NAME"]].decode(encoding)
+            mu.full_name = row[header["FULL_NAME"]].decode(encoding) or name
             mu.global_id = row[header["GLOBALID"]]
             mu.info = row[header["INFO"]].decode(encoding)
             mu.errors = error
-            mu.save()
+            try:
+                mu.clean_fields()
+                mu.save()
+            except ValidationError as e:
+                self.show_validation_error("Error validating healing object", mu, e)
+                raise
 
             service = Service()
             service.healing_object = mu
@@ -242,20 +260,18 @@ class Command(BaseCommand):
                 if len(beds) == 0:
                     beds = row[header["KOIKA"]].decode(encoding)
             service.hospital_beds = beds
-            service.save()
-
-            counter += 1
+            try:
+                service.clean_fields()
+                service.save()
+            except ValidationError as e:
+                self.show_validation_error("Error validating service", service, e)
+                raise
 
         print "Total: %d" % (counter,)
         print "Unknown addresses: %d" % (unknown_addresses,)
         print "Empty streets: %d" % (empty_streets,)
         print "Unknown streets: %d" % (unknown_streets,)
         print "Empty types: %d" % (empty_types,)
-
-
-
-
-
         #     district_id = int(row[_district_id])
         #     street_id = int(row[_street_id])
         #     house_letter = None
@@ -285,5 +301,10 @@ class Command(BaseCommand):
         #         created += 1
         #     else:
         #         updated += 1
+
+    def show_validation_error(self, message, object, e):
+        print message
+        print serializers.serialize('json', [object])
+        print json.dumps(e.message_dict)
 
 
