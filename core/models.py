@@ -142,11 +142,11 @@ class LegalEntity(ChiefModelMixin):
     """
     Юридические лица
     """
-    name = fields.CharField(u"Наименование", max_length=128, help_text=u"Наименование юр. лица из устава")
+    name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава")
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True, help_text=u"Основной государственный регистрационный номер")
     inn_code = fields.CharField(u"ИНН", max_length=256,
-                                validators=[RegexValidator(regex="\d+", message=u"ИНН может содержать только цифры")])
-    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", related_name='registered_entities')
+                                validators=[RegexValidator(regex="\d+", message=u"ИНН может содержать только цифры")], null=True)
+    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 

@@ -1,20 +1,17 @@
-# -*- coding: utf-8 -*-
 # coding=utf-8
 
 import codecs
 import csv
 from optparse import make_option
 from sys import stderr
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
-import sys
-from core.models import HealthObjectType, StreetObject, AddressObject
+from core.models import HealthObjectType, StreetObject, AddressObject, LegalEntity, HealingObject
 
 
 __author__ = 'pparkhomenko'
 
 class Command(BaseCommand):
-    args = "<filename[. filename, filename...]>"
+    args = "<filename>"
     help = "Imports csv file with healings to database"
     option_list = BaseCommand.option_list +\
                   (make_option("--encoding", dest="encoding", default="cp1251", help="File encoding"),)
@@ -26,13 +23,16 @@ class Command(BaseCommand):
         print options
         encoding = options['encoding']
         codecs.lookup(encoding)
-        print "Importing healings"
-        for filename in args:
-            print "Importing healings from " + filename
-            csvfile = open(filename, "rb")
-            reader = csv.reader(csvfile, delimiter=';')
-            self.import_data(reader, encoding)
-            csvfile.close()
+        filename = args[0]
+        print "Importing healings from " + filename
+        csvfile = open(filename, "rb")
+        reader = csv.reader(csvfile, delimiter=';')
+        lemap = self.import_le_data(reader, encoding)
+        csvfile.close()
+        csvfile = open(filename, "rb")
+        reader = csv.reader(csvfile, delimiter=';')
+        self.import_mu_data(lemap, reader, encoding)
+        csvfile.close()
 
 
     def parse_header(self, header, encoding):
@@ -47,6 +47,7 @@ class Command(BaseCommand):
             index += 1
         print parsed
         return parsed
+
 
     def get_address(self, header, row, streets, encoding, number):
         house = row[header["ADRES_DOM"]].decode(encoding)
@@ -64,10 +65,10 @@ class Command(BaseCommand):
 
         if len(addresses) == 0:
             stderr.write(u"Unknown address at %d\n" % (number,))
-            print u"Unknown address: " + streets[0].name + u", house '" + house + u"', letter '" + house_letter + u"', housing '" + housing + u"', building '" + building + "'\n"
-            return None
+            error = u"Unknown address: " + streets[0].name + u", дом '" + house + u"', литера '" + house_letter + u"', корпус '" + housing + u"', строение '" + building + "'\n"
+            return None, error
         elif len(addresses) == 1:
-            return addresses[0]
+            return addresses[0], None
         address = None
         counter = 0
         for a in addresses:
@@ -75,29 +76,101 @@ class Command(BaseCommand):
                 address = a
                 counter += 1
         if (counter == 1):
-            return address
+            return address, None
         if address == None:
             stderr.write(u"Multiple invalid addresses at %d\n" % (number,))
+            error = u"Множество недействующих адресов"
         else:
             stderr.write(u"Multiple valid addresses at %d\n" % (number,))
-        return None
+            error = u"Множество действующих адресов"
+        return None, error
+
 
     def get_addresses(self, streets, house, house_letter, housing, building):
         return AddressObject.objects.all().filter(street__in=streets).filter(house=house).filter(house_letter=house_letter).filter(housing=housing).filter(building=building)
 
-    def import_data(self, reader, encoding):
+
+    def fill_chief_data(self, header, row, data, number, encoding):
+        data.chief_original_name = row[header["RUKOVODIT"]].decode(encoding)
+        sex = str(row[header["R_POL"]].decode(encoding)).lower()
+        if sex == u"муж" or sex == u"м":
+            data.chief_sex = 'M'
+        elif sex == u"жен" or sex == u"ж":
+            data.chief_sex = 'F'
+        else:
+            if len(sex) > 0:
+                stderr.write(u"Unknown sex at " + str(number))
+            data.chief_sex = None
+        data.chief_phone = row[header["R_TEL_NOMER"]].decode(encoding)
+
+
+    def import_le_data(self, reader, encoding):
         reader.next()
         header = self.parse_header(reader.next(), encoding)
 
         counter = 0
-        updated = 0
-        created = 0
+        empty_streets = 0
+        unknown_streets = 0
+        unknown_addresses = 0
+        legal_entities = {}
+        for row in reader:
+            lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
+            if len(lpu) == 0:
+                lpu = row[header["NAME"]].decode(encoding)
+            elif legal_entities.has_key(lpu):
+                continue
+
+            street = row[header["ADRES_UL_NAME"]].decode(encoding)
+            address = None
+            if len(street) == 0:
+                stderr.write(u"Empty street at %d\n" % (counter + 3,))
+                empty_streets += 1
+                unknown_addresses += 1
+            else:
+                streets = StreetObject.objects.all().filter(name=street)
+                if len(streets) == 0:
+                    stderr.write(u"Unknown street at %d\n" % (counter + 3,))
+                    error = u"Улица не найдена: " + street
+                    unknown_streets += 1
+                    unknown_addresses += 1
+                else:
+                    address, error = self.get_address(header, row, streets, encoding, counter + 3)
+                    if (address == None):
+                        unknown_addresses += 1
+
+            le = LegalEntity()
+            le.name = lpu
+            self.fill_chief_data(header, row, le, counter + 3, encoding)
+            le.fact_address = address
+            le.original_address = row[header["ADRES_STR"]].decode(encoding)
+            le.errors = error
+            le.save()
+            legal_entities[lpu] = le
+
+            counter += 1
+
+        print "Total: %d" % (counter,)
+        print "Unknown addresses: %d" % (unknown_addresses,)
+        print "Empty streets: %d" % (empty_streets,)
+        print "Unknown streets: %d" % (unknown_streets,)
+
+
+
+    def import_mu_data(self, legal_entities, reader, encoding):
+        reader.next()
+        header = self.parse_header(reader.next(), encoding)
+
+        counter = 0
         created_types = 0
         empty_types = 0
         empty_streets = 0
         unknown_streets = 0
         unknown_addresses = 0
         for row in reader:
+            lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
+            if len(lpu) == 0:
+                lpu = row[header["NAME"]].decode(encoding)
+            lpu = legal_entities[lpu]
             hotype = row[header["TYPE"]].decode(encoding)
             if len(hotype) == 0:
                 stderr.write(u"Empty type at %d\n" % (str(counter + 3),))
@@ -115,26 +188,42 @@ class Command(BaseCommand):
                 unknown_addresses += 1
             else:
                 streets = StreetObject.objects.all().filter(name=street)
-
                 if len(streets) == 0:
                     stderr.write(u"Unknown street at %d\n" % (counter + 3,))
-                    print u"Unknown street: " + street
+                    error = u"Улица не найдена: " + street
                     unknown_streets += 1
                     unknown_addresses += 1
                 else:
-                    address = self.get_address(header, row, streets, encoding, counter + 3)
+                    address, error = self.get_address(header, row, streets, encoding, counter + 3)
                     if (address == None):
                         unknown_addresses += 1
 
+            mu = HealingObject()
+            mu.object_type = hotype
+            mu.legal_entity = lpu
+            self.fill_chief_data(header, row, mu, counter + 3, encoding)
+            mu.address = address
+            mu.original_address = row[header["ADRES_STR"]].decode(encoding)
+            mu.name = row[header["NAME"]].decode(encoding)
+            mu.short_name = row[header["SHORT_NAME"]].decode(encoding)
+            mu.full_name = row[header["FULL_NAME"]].decode(encoding)
+            mu.global_id = row[header["GLOBALID"]]
+            mu.info = row[header["INFO"]].decode(encoding)
+            mu.errors = error
+            mu.save()
+
             counter += 1
-            if counter % 100 == 0:
-                print "Updated: %d; Created: %d" % (updated, created)
 
         print "Total: %d" % (counter,)
         print "Unknown addresses: %d" % (unknown_addresses,)
         print "Empty streets: %d" % (empty_streets,)
         print "Unknown streets: %d" % (unknown_streets,)
         print "Empty types: %d" % (empty_types,)
+
+
+
+
+
         #     district_id = int(row[_district_id])
         #     street_id = int(row[_street_id])
         #     house_letter = None
