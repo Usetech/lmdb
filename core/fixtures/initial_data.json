@@ -38,5 +38,8 @@
     { "model":"core.HealthObjectType", "pk":16, "fields": {"name":"Станции переливания крови", "created_at":"2013-03-16T17:41:28+00:00", "modified_at":"2013-03-16T17:41:28+00:00"} },
     { "model":"core.HealthObjectType", "pk":17, "fields": {"name":"Станции скорой и неотложной медицинской помощи", "created_at":"2013-03-16T17:41:28+00:00", "modified_at":"2013-03-16T17:41:28+00:00"} },
     { "model":"core.HealthObjectType", "pk":18, "fields": {"name":"Стационары", "created_at":"2013-03-16T17:41:28+00:00", "modified_at":"2013-03-16T17:41:28+00:00"} },
-    { "model":"core.HealthObjectType", "pk":19, "fields": {"name":"Хосписы", "created_at":"2013-03-16T17:41:28+00:00", "modified_at":"2013-03-16T17:41:28+00:00"} }
+    { "model":"core.HealthObjectType", "pk":19, "fields": {"name":"Хосписы", "created_at":"2013-03-16T17:41:28+00:00", "modified_at":"2013-03-16T17:41:28+00:00"} },
+
+    { "model":"auth.Group", "pk":1, "fields": {"name":"Управляющие юрлицами"} },
+    { "model":"auth.Group", "pk":2, "fields": {"name":"Управляющие объектами здравоохранения"} }
 ]
