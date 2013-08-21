@@ -112,7 +112,7 @@ class Command(BaseCommand):
         reader.next()
         header = self.parse_header(reader.next(), encoding)
 
-        counter = 0
+        counter = 2
         empty_streets = 0
         unknown_streets = 0
         unknown_addresses = 0
@@ -124,6 +124,9 @@ class Command(BaseCommand):
             lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
+            if len(lpu) == 0:
+                stderr.write("Legal entity name is empty at %d" % (counter))
+                continue
             if legal_entities.has_key(lpu):
                 continue
 
@@ -131,25 +134,25 @@ class Command(BaseCommand):
             address = None
             error = None
             if len(street) == 0:
-                # stderr.write(u"Empty street at %d\n" % (counter + 3,))
+                # stderr.write(u"Empty street at %d\n" % (counter,))
                 empty_streets += 1
                 unknown_addresses += 1
             else:
                 streets = StreetObject.objects.all().filter(name=street)
                 if len(streets) == 0:
-                    # stderr.write(u"Unknown street at %d\n" % (counter + 3,))
+                    # stderr.write(u"Unknown street at %d\n" % (counter,))
                     error = u"Улица не найдена: " + street
                     unknown_streets += 1
                     unknown_addresses += 1
                 else:
-                    address, error = self.get_address(header, row, streets, encoding, counter + 3)
+                    address, error = self.get_address(header, row, streets, encoding, counter)
                     if not address:
                         unknown_addresses += 1
 
             le = LegalEntity()
             le.name = lpu
             le.original_name = row[header["NAME"]].decode(encoding)
-            self.fill_chief_data(header, row, le, counter + 3, encoding)
+            self.fill_chief_data(header, row, le, counter, encoding)
             le.fact_address = address
             le.original_address = row[header["ADRES_STR"]].decode(encoding)
             le.errors = error
@@ -162,7 +165,7 @@ class Command(BaseCommand):
 
             legal_entities[lpu] = le
 
-        print "Total: %d" % (counter,)
+        print "Total: %d" % (counter - 2,)
         print "Unknown addresses: %d" % (unknown_addresses,)
         print "Empty streets: %d" % (empty_streets,)
         print "Unknown streets: %d" % (unknown_streets,)
@@ -173,7 +176,7 @@ class Command(BaseCommand):
         reader.next()
         header = self.parse_header(reader.next(), encoding)
 
-        counter = 0
+        counter = 2
         created_types = 0
         empty_types = 0
         empty_streets = 0
@@ -185,6 +188,9 @@ class Command(BaseCommand):
             lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
+            if len(lpu) == 0:
+                stderr.write("Legal entity name is empty at %d" % (counter))
+                continue
             lpu = legal_entities[lpu]
             hotype = row[header["TYPE"]].decode(encoding)
             if len(hotype) == 0:
