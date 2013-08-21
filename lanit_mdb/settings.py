@@ -15,6 +15,13 @@ FORCE_SCRIPT_NAME = "/"
 
 MANAGERS = ADMINS
 
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'issues@usetech.ru'
+EMAIL_HOST_PASSWORD = '52O1x7Y45ee1I9DE'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'issues@usetech.ru'
+
 DATABASES = {
 #    'default': {
 #        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.

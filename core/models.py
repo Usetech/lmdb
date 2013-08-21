@@ -1,5 +1,7 @@
 # coding=utf-8
 import datetime
+from django.contrib.contenttypes.models import ContentType
+from django.core import urlresolvers
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -173,6 +175,10 @@ class LegalEntity(ChiefModelMixin):
     def __unicode__(self):
         return self.name
 
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
+
     class Meta:
         verbose_name = u"юридическое лицо"
         verbose_name_plural = u"юридические лица"
@@ -235,6 +241,10 @@ class HealingObject(BaseModel):
 
     def __unicode__(self):
         return self.name
+
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
 
     class Meta:
         verbose_name = u"объект здравоохранения"

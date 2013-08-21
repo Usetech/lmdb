@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from guardian.admin import GuardedModelAdmin
 from guardian.utils import get_user_obj_perms_model
-from core.admin.forms import ServiceForm, HealingObjectForm, NamedModelForm, get_user_manager_form, user_manager_fieldset
+from core.admin.forms import ServiceForm, HealingObjectForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields
 from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType, StreetObject, DistrictObject, Service, HealingObject
 
 __author__ = 'sergio'
@@ -106,27 +106,29 @@ class HealingObjectServiceInline(admin.StackedInline):
 
 class HealingObjectInline(admin.StackedInline):
     model = HealingObject
-    form = HealingObjectForm
+    form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения",
+                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения", "email/welcome_healingobject.html")
     raw_id_fields = ('address',)
     related_lookup_fields = {
         'fk': ['address']
     }
     fields = (
-        ('object_type',),
-        ('address', ),
-        ('full_name',),
-        ('name',),
-        ('short_name',),
-        ('global_id',),
-        ('info', )
-    )
+                 ('object_type',),
+                 ('address', ),
+                 ('full_name',),
+                 ('name',),
+                 ('short_name',),
+                 ('global_id',),
+                 ('info', )
+             ) + user_manager_fields
     extra = 0
     suit_classes = 'suit-tab suit-tab-healings'
 
 
 class LegalEntityAdmin(BaseGuardedModelAdmin):
     model = LegalEntity
-    form = get_user_manager_form(LegalEntity, 'change_legalentity', u"Управляющие юрлицами")
+    form = get_user_manager_form(LegalEntity, 'change_legalentity', u"Управляющие юрлицами",
+                                 u"Реестр МУ: требуется актуализация информации по юридическому лицу", "email/welcome_legalentity.html")
     date_hierarchy = 'modified_at'
     search_fields = ('name', 'chief_original_name', 'manager_user')
     list_filter = ('deleted_at',)
@@ -258,7 +260,8 @@ class ServiceAdmin(BaseModelAdmin):
 
 class HealingObjectAdmin(BaseGuardedModelAdmin):
     model = HealingObject
-    form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения")
+    form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения",
+                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения", "email/welcome_healingobject.html")
     list_filter = ('object_type',)
     list_display_links = ['object_type', 'name']
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))

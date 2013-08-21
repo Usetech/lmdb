@@ -1,0 +1,9 @@
+{% extends "email/email_base.html" %}
+
+{% block body %}
+    <p>Ваш E-mail был указан как ответственный за наполнение и актуализацю данных по юрлицу &laquo;{{ entity.name }}&raquo;.</p>
+    <p>Пожалуйста, <a href="http://{{ base_url }}{{ entity.get_admin_url }}">перейдите по ссылке</a> и заполните данные.</p>
+    <p>
+    Для входа используйте логин <strong>{{ user.email }}</strong> и пароль <strong>{{ password }}</strong>
+    </p>
+{% endblock %}
