@@ -55,13 +55,13 @@ class Command(BaseCommand):
         return parsed
 
     def get_full_city_name(self, city, type):
-        if len(type) == 0:
-            return "город " + city
-        return type + " " + city
+        if type is None or len(type) == 0:
+            return u"город " + city
+        return type + u" " + city
 
 
     def is_default_city(self, city, type):
-        if len(city) == 0:
+        if city is None or len(city) == 0:
             return True
         return self.get_full_city_name(city, type).lower() in {u"город москва", u"город зеленоград"};
 
@@ -100,6 +100,9 @@ class Command(BaseCommand):
             addresses = self.get_addresses(city, city_type, streets, house + house_letter, '', building, housing)
 
         if len(addresses) == 0 and self.is_default_city(city, city_type):
+            zip_code = row[header["ADRES_INDEX"]].decode(encoding)
+            if len(zip_code) > 6:
+                return None, u"Ошибка в индексе"
             address = AddressObject()
             address.city = city
             address.city_type = city_type
@@ -108,11 +111,11 @@ class Command(BaseCommand):
             address.house_letter = house_letter
             address.housing = housing
             address.building = building
-            address.zip_code = row[header["ADRES_INDEX"]].decode(encoding)
+            address.zip_code = zip_code
             address.area = row[header["ADRES_OBL"]].decode(encoding)
             address.full_address_string = address.full_string()
             address.save()
-            return address, u"New address"
+            return address, u"Новый адрес"
 
         if len(addresses) == 0:
             stderr.write(u"Unknown address at %d\n" % (number,))
@@ -144,6 +147,7 @@ class Command(BaseCommand):
         if self.is_default_city(city, city_type):
             return rs
         rs.filter(city=city).filter(city_type=city_type)
+        return rs
 
 
     def fill_chief_data(self, header, row, data, number, encoding):
@@ -177,7 +181,7 @@ class Command(BaseCommand):
             if len(lpu) == 0:
                 lpu = row[header["NAME"]].decode(encoding)
             if len(lpu) == 0:
-                stderr.write("Legal entity name is empty at %d" % (counter))
+                stderr.write("Legal entity name is empty at %d\n" % (counter))
                 continue
             if legal_entities.has_key(lpu):
                 continue
