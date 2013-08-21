@@ -2,6 +2,7 @@
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from guardian.admin import GuardedModelAdmin
+from guardian.models import UserObjectPermission
 from guardian.utils import get_user_obj_perms_model
 from core.admin.forms import ServiceForm, HealingObjectForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields
 from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType, StreetObject, DistrictObject, Service, HealingObject
@@ -125,6 +126,7 @@ class HealingObjectInline(admin.StackedInline):
 
 
 class LegalEntityAdmin(BaseGuardedModelAdmin):
+
     model = LegalEntity
     form = get_user_manager_form(LegalEntity, 'change_legalentity', u"Управляющие юрлицами",
                                  u"Реестр МУ: требуется актуализация информации по юридическому лицу", "email/welcome_legalentity.html")
@@ -156,6 +158,14 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
         chief_fields,
         user_manager_fieldset
     )
+
+    def save_model(self, request, obj, form, change):
+        obj.save()
+        try:
+            UserObjectPermission.objects.assign_perm('change_legalentity', request.user, obj)
+        except:
+            pass
+
     inlines = [HealingObjectInline]
 
 
@@ -204,7 +214,7 @@ class DistrictObjectAdmin(NamedModelAdmin):
     model = DistrictObject
 
 
-class ServiceAdmin(BaseModelAdmin):
+class ServiceAdmin(BaseGuardedModelAdmin):
     model = Service
     form = ServiceForm
     raw_id_fields = ('healing_object',)
@@ -291,3 +301,14 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
     search_fields = ('object_type__name', 'name', 'address__street__name')
     list_display = ('object_type', 'name', 'address', 'manager_user', 'modified_at', 'deleted_at', 'errors')
     inlines = [HealingObjectServiceInline]
+
+    def save_model(self, request, obj, form, change):
+        obj.save()
+        try:
+            UserObjectPermission.objects.assign_perm('change_healingobject', request.user, obj)
+        except:
+            pass
+
+        if len(obj.services.all()):
+            [UserObjectPermission.objects.assign_perm('change_service', request.user, service) for service in obj.services.all()]
+            [UserObjectPermission.objects.assign_perm('delete_service', request.user, service) for service in obj.services.all()]

@@ -108,7 +108,7 @@ def get_user_manager_form(model_type, permission, group_name, email_subject, ema
                             from_email=DEFAULT_FROM_EMAIL,
                             to=[u.email])
                         email.content_subtype = "html"
-                        email.send()
+                        email.send(fail_silently=True)
 
                 try:
                     g = Group.objects.get(name=group_name)
