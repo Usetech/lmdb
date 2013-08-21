@@ -48,9 +48,8 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         user_obj_perms_queryset = (user_model.objects
                                    .filter(user=request.user)
                                    .filter(permission__content_type=ContentType.objects.get_for_model(self.model))).values_list('object_pk', flat=True)
-        if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
-            qs = qs.filter(pk__in=map(int, user_obj_perms_queryset))
-        return qs
+        #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
+        return qs.filter(pk__in=map(int, user_obj_perms_queryset))
 
 
 class AddressObjectAdmin(BaseModelAdmin):
