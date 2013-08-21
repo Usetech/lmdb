@@ -167,6 +167,8 @@ class LegalEntity(ChiefModelMixin):
 
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
 
+    manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
+
     def __unicode__(self):
         return self.name
 
@@ -227,6 +229,8 @@ class HealingObject(BaseModel):
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
     parent = models.ForeignKey('self', related_name='branches', null=True, blank=True, verbose_name=u"Главное ЛПУ")
+
+    manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
 
     def __unicode__(self):
         return self.name
