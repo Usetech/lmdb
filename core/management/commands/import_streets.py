@@ -62,14 +62,14 @@ class Command(BaseCommand):
         id_index, name_index, type_index, iname_index, valid_index = self.parse_header(reader.next(), encoding)
         print id_index, name_index, valid_index
         for row in reader:
-            id = int(row[id_index])
+            id = row[id_index].decode(encoding)
             name = row[name_index].decode(encoding)
             type = row[type_index].decode(encoding)
             iname = row[iname_index].decode(encoding)
             valid = int(row[valid_index])
             print id, name, valid
             street = StreetObject()
-            street.id = id
+            street.bti_id = id
             street.name = name
             street.type = type
             street.iname = iname

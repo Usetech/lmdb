@@ -61,37 +61,37 @@ class Command(BaseCommand):
 
 
     def is_default_city(self, city, type):
-        if city.length() == 0:
+        if len(city) == 0:
             return True
         return self.get_full_city_name(city, type).lower() in {u"город москва", u"город зеленоград"};
 
 
     def get_streets(self, header, row, street, encoding):
-        city = row[header["ADRES_NASELEN_PUNKT"]].decode(encoding)
+        city = row[header["ADRES_NASELENPUNKT"]].decode(encoding)
         city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower()
         street_type = row[header["ADRES_UL_TYPE"]].decode(encoding).lower()
         if self.is_default_city(city, city_type):
-            return StreetObject.objects.al().filter(name=street)
+            return StreetObject.objects.all().filter(name=street)
         iname = street + " " + street_type + " (" + self.get_full_city_name(city, city_type) + ")"
         streets = StreetObject.objects.all().filter(iname=iname)
         if len(streets):
             return streets
-        street = StreetObject()
-        street.name = street
-        street.type = street_type
-        street.iname = iname
-        street.save()
-        return [street,]
+        so = StreetObject()
+        so.name = street
+        so.type = street_type
+        so.iname = iname
+        so.save()
+        return [so,]
 
     def get_address(self, header, row, streets, encoding, number):
-        city = row[header["ADRES_NASELEN_PUNKT"]].decode(encoding)
+        city = row[header["ADRES_NASELENPUNKT"]].decode(encoding)
         city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower()
         house = row[header["ADRES_DOM"]].decode(encoding).upper()
         house_letter = row[header["ADRES_DOM_litera"]].decode(encoding).upper()
         housing = row[header["ADRES_KORPUS"]].decode(encoding)
         building = row[header["ADRES_STROENIE"]].decode(encoding)
 
-        addresses = self.get_addresses(streets, house, house_letter, housing, building)
+        addresses = self.get_addresses(city, city_type, streets, house, house_letter, housing, building)
         if len(addresses) == 0 and len(housing) > 0:
             addresses = self.get_addresses(city, city_type, streets, house + '/' + housing, house_letter, '', building)
         if len(addresses) == 0 and (len(housing) > 0 or (len(building) > 0)):

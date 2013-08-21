@@ -69,6 +69,7 @@ class ServiceType(NamedModel):
 
 
 class StreetObject(BaseModel):
+    bti_id = fields.CharField(u"Уникальный код улицы", max_length=16, null=True, blank=True, unique=True)
     name = fields.CharField(u"Наименование", max_length=128)
     type = fields.CharField(u"Тип топонима", max_length=128)
     iname = fields.CharField(u"Название для поиска, сортировки", max_length=256)
@@ -89,10 +90,10 @@ class DistrictObject(NamedModel):
 
 
 class AddressObject(BaseModel):
-    bsi_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=False, blank=False, unique=True, db_index=True)
+    bti_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=True, blank=True, unique=True)
     zip_code = fields.CharField(u"Индекс", max_length=6)
     area = fields.CharField(u"Область", max_length=128)
-    district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=False)
+    district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=True)
     city_type = fields.CharField(u"Тип нас. пункта", max_length=128)
     city = fields.CharField(u"Нас. пункт", max_length=128)
     street = models.ForeignKey(StreetObject, verbose_name=u"Улица", null=False)

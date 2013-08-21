@@ -67,10 +67,11 @@ class Command(BaseCommand):
         counter = 0
         updated = 0
         created = 0
+        bulk = []
         for row in reader:
-            id = int(row[_id])
+            id = row[_id].decode(encoding)
             district_id = int(row[_district_id])
-            street_id = int(row[_street_id])
+            street_id = row[_street_id]
             house = row[_house].decode(encoding)
             housing = row[_housing].decode(encoding)
             building = row[_building].decode(encoding)
@@ -81,29 +82,52 @@ class Command(BaseCommand):
             else:
                 house_letter = ''
 
-            address, new_created = AddressObject.objects.get_or_create(
-                bsi_id=id,
-                defaults={
-                    'house': house,
-                    'house_letter': house_letter,
-                    'housing': housing,
-                    'building': building,
-                    'street_id': street_id,
-                    'district_id': district_id,
-                    'created_at': timezone.now()
-                }
-            )
-            if not address.full_address_string:
-                address.full_address_string = address.full_string()
-                address.save()
+            # address, new_created = AddressObject.objects.get_or_create(
+            #     bti_id=id,
+            #     defaults={
+            #         'house': house,
+            #         'house_letter': house_letter,
+            #         'housing': housing,
+            #         'building': building,
+            #         'street_id': street_id,
+            #         'district_id': district_id,
+            #         'created_at': timezone.now()
+            #     }
+            # )
+            # if not address.full_address_string:
+            #     address.full_address_string = address.full_string()
+            #     address.save()
 
-            if new_created:
-                created += 1
+            streets = StreetObject.objects.all().filter(bti_id=street_id)
+            if len(streets) != 1:
+                raise Exception("More then one street found for id " + street_id + " at " + str(counter))
+            street = streets[0]
+            address = AddressObject()
+            address.bti_id = id
+            address.district_id = district_id
+            address.street = street
+            address.house = house
+            if len(housing) == 1 and housing.isalpha():
+                address.house_letter = housing.upper()
+                address.housing = u""
             else:
-                updated += 1
+                address.house_letter = u""
+                address.housing = housing
+            address.building = building
+            address.full_address_string = address.full_string()
+            bulk.append(address)
+            #address.save()
+            created += 1
+
+            # if new_created:
+            #     created += 1
+            # else:
+            #     updated += 1
 
             counter += 1
             if counter % 100 == 0:
                 print "Updated: %d; Created: %d" % (updated, created)
+                AddressObject.objects.bulk_create(bulk)
+                bulk = []
 
 
