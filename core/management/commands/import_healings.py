@@ -54,19 +54,65 @@ class Command(BaseCommand):
         print parsed
         return parsed
 
+    def get_full_city_name(self, city, type):
+        if len(type) == 0:
+            return "город " + city
+        return type + " " + city
+
+
+    def is_default_city(self, city, type):
+        if city.length() == 0:
+            return True
+        return self.get_full_city_name(city, type).lower() in {u"город москва", u"город зеленоград"};
+
+
+    def get_streets(self, header, row, street, encoding):
+        city = row[header["ADRES_NASELEN_PUNKT"]].decode(encoding)
+        city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower()
+        street_type = row[header["ADRES_UL_TYPE"]].decode(encoding).lower()
+        if self.is_default_city(city, city_type):
+            return StreetObject.objects.al().filter(name=street)
+        iname = street + " " + street_type + " (" + self.get_full_city_name(city, city_type) + ")"
+        streets = StreetObject.objects.all().filter(iname=iname)
+        if len(streets):
+            return streets
+        street = StreetObject()
+        street.name = street
+        street.type = street_type
+        street.iname = iname
+        street.save()
+        return [street,]
+
     def get_address(self, header, row, streets, encoding, number):
-        house = row[header["ADRES_DOM"]].decode(encoding)
+        city = row[header["ADRES_NASELEN_PUNKT"]].decode(encoding)
+        city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower()
+        house = row[header["ADRES_DOM"]].decode(encoding).upper()
         house_letter = row[header["ADRES_DOM_litera"]].decode(encoding).upper()
         housing = row[header["ADRES_KORPUS"]].decode(encoding)
         building = row[header["ADRES_STROENIE"]].decode(encoding)
 
         addresses = self.get_addresses(streets, house, house_letter, housing, building)
         if len(addresses) == 0 and len(housing) > 0:
-            addresses = self.get_addresses(streets, house + '/' + housing, house_letter, '', building)
+            addresses = self.get_addresses(city, city_type, streets, house + '/' + housing, house_letter, '', building)
         if len(addresses) == 0 and (len(housing) > 0 or (len(building) > 0)):
-            addresses = self.get_addresses(streets, house, house_letter, building, housing)
+            addresses = self.get_addresses(city, city_type, streets, house, house_letter, building, housing)
         if len(addresses) == 0 and len(house_letter):
-            addresses = self.get_addresses(streets, house + house_letter, '', building, housing)
+            addresses = self.get_addresses(city, city_type, streets, house + house_letter, '', building, housing)
+
+        if len(addresses) == 0 and self.is_default_city(city, city_type):
+            address = AddressObject()
+            address.city = city
+            address.city_type = city_type
+            address.street = streets[0]
+            address.house = house
+            address.house_letter = house_letter
+            address.housing = housing
+            address.building = building
+            address.zip_code = row[header["ADRES_INDEX"]].decode(encoding)
+            address.area = row[header["ADRES_OBL"]].decode(encoding)
+            address.full_address_string = address.full_string()
+            address.save()
+            return address, u"New address"
 
         if len(addresses) == 0:
             stderr.write(u"Unknown address at %d\n" % (number,))
@@ -91,9 +137,14 @@ class Command(BaseCommand):
             error = u"Множество действующих адресов"
         return None, error
 
-    def get_addresses(self, streets, house, house_letter, housing, building):
-        return AddressObject.objects.all().filter(street__in=streets).filter(house=house).filter(house_letter=house_letter).filter(housing=housing).filter(
-            building=building)
+
+    def get_addresses(self, city, city_type, streets, house, house_letter, housing, building):
+        rs = AddressObject.objects.all().filter(street__in=streets).filter(house=house).filter(
+                house_letter=house_letter).filter(housing=housing).filter(building=building)
+        if self.is_default_city(city, city_type):
+            return rs
+        rs.filter(city=city).filter(city_type=city_type)
+
 
     def fill_chief_data(self, header, row, data, number, encoding):
         data.chief_original_name = row[header["RUKOVODIT"]].decode(encoding)
@@ -107,6 +158,7 @@ class Command(BaseCommand):
                 stderr.write(u"Unknown sex at " + str(number))
             data.chief_sex = None
         data.chief_phone = row[header["R_TEL_NOMER"]].decode(encoding)
+
 
     def import_le_data(self, reader, encoding):
         reader.next()
@@ -138,7 +190,7 @@ class Command(BaseCommand):
                 empty_streets += 1
                 unknown_addresses += 1
             else:
-                streets = StreetObject.objects.all().filter(name=street)
+                streets = self.get_streets(header, row, street, encoding)
                 if len(streets) == 0:
                     # stderr.write(u"Unknown street at %d\n" % (counter,))
                     error = u"Улица не найдена: " + street
@@ -208,7 +260,7 @@ class Command(BaseCommand):
                 empty_streets += 1
                 unknown_addresses += 1
             else:
-                streets = StreetObject.objects.all().filter(name=street)
+                streets = self.get_streets(header, row, street, encoding)
                 if len(streets) == 0:
                     stderr.write(u"Unknown street at %d\n" % (counter + 3,))
                     error = u"Улица не найдена: " + street
