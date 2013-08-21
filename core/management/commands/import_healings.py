@@ -253,7 +253,8 @@ class Command(BaseCommand):
             service.hospital_levels = row[header["LVL"]].decode(encoding)
             service.tour = row[header["SMENA"]].decode(encoding)
             service.receipes_provisioning = row[header["RECEPT"]].decode(encoding)
-            service.aptheke_type = row[header["DRUGSTORE_TYPE"]].decode(encoding)
+            service.drugstore_type = row[header["DRUGSTORE_TYPE"]].decode(encoding)
+            service.hospital_type = row[header["HOSPITAL_TYPE"]].decode(encoding)
             beds = row[header["KOIKI"]].decode(encoding)
             if len(beds) == 0:
                 beds = row[header["KOJKA"]].decode(encoding)

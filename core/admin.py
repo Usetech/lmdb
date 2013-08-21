@@ -143,7 +143,8 @@ class HealingObjectServiceInline(admin.StackedInline):
         ('hospital_levels',),
         ('tour',),
         ('receipes_provisioning',),
-        ('aptheke_type',),
+        ('drugstore_type',),
+        ('hospital_type',),
     )
     suit_classes = 'suit-tab suit-tab-services'
     extra = 0
@@ -276,7 +277,8 @@ class ServiceAdmin(BaseModelAdmin):
                     ('hospital_levels',),
                     ('tour',),
                     ('receipes_provisioning',),
-                    ('aptheke_type',),
+                    ('drugstore_type',),
+                    ('hospital_type',),
                 )
             }
         ),

@@ -198,7 +198,8 @@ class Service(ChiefModelMixin):
     hospital_levels = models.CharField(u"Уровень стационара", max_length=1024, null=True, blank=True)
     tour = models.CharField(u"Смена", max_length=1024, null=True, blank=True)
     receipes_provisioning = models.CharField(u"Обеспечение рецептов", max_length=1024, null=True, blank=True)
-    aptheke_type = models.CharField(u"Тип аптеки", max_length=256, null=True, blank=True)
+    drugstore_type = models.CharField(u"Тип аптеки", max_length=256, null=True, blank=True)
+    hospital_type = models.CharField(u"Тип стационара", max_length=256, null=True, blank=True)
 
     def __unicode__(self):
         return "%s" % self.service.name
