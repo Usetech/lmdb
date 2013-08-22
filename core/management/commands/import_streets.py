@@ -10,10 +10,11 @@ from core.models import StreetObject
 
 __author__ = 'pparkhomenko'
 
+
 class Command(BaseCommand):
     args = "<filename[. filename, filename...]>"
     help = "Imports csv file with streets to database"
-    option_list = BaseCommand.option_list +\
+    option_list = BaseCommand.option_list + \
                   (make_option("--encoding", dest="encoding", default="cp1251", help="File encoding"),)
 
     def handle(self, *args, **options):
@@ -68,13 +69,20 @@ class Command(BaseCommand):
             iname = row[iname_index].decode(encoding)
             valid = int(row[valid_index])
             print id, name, valid
-            street = StreetObject()
-            street.bti_id = id
-            street.name = name
-            street.type = type
-            street.iname = iname
-            street.valid = valid != 0
-            street.created_at = timezone.now()
-            street.save()
 
-
+            updated_count = StreetObject.objects.filter(bti_id=id).update(
+                name=name,
+                type=type,
+                iname=iname,
+                valid=valid != 0,
+                created_at=timezone.now()
+            )
+            if not updated_count:
+                street = StreetObject()
+                street.bti_id = id
+                street.name = name
+                street.type = type
+                street.iname = iname
+                street.valid = valid != 0
+                street.created_at = timezone.now()
+                street.save()

@@ -78,7 +78,7 @@ class StreetObject(BaseModel):
     valid = fields.BooleanField(u"Действующее", null=False, default=True)
 
     def __unicode__(self):
-        return self.name
+        return self.iname
 
     class Meta:
         verbose_name = u"улица"
@@ -94,8 +94,8 @@ class DistrictObject(NamedModel):
 class AddressObject(BaseModel):
     bti_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=True, blank=True, unique=True)
     zip_code = fields.CharField(u"Индекс", max_length=6)
-    area = fields.CharField(u"Область", max_length=128)
-    district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=True)
+    area = fields.CharField(u"Область", max_length=128, blank=True)
+    district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=True, blank=True)
     city_type = fields.CharField(u"Тип нас. пункта", max_length=128)
     city = fields.CharField(u"Нас. пункт", max_length=128)
     street = models.ForeignKey(StreetObject, verbose_name=u"Улица", null=False)
@@ -108,16 +108,21 @@ class AddressObject(BaseModel):
     def full_string(self):
         house = u""
         if self.house:
-            house = u"д. %s%s " % (self.house, self.house_letter)
+            house = u"д. %s%s " % (self.house.strip(), self.house_letter.strip())
 
         housing = u""
         if self.housing:
-            housing = u"корп. %s " % self.housing
+            housing = u"корп. %s " % self.housing.strip()
 
         building = u""
         if self.building:
-            building = u"стр. %s " % self.building
-        return u"%s %s %s %s" % (self.street.name, house, housing, building)
+            building = u"стр. %s " % self.building.strip()
+        str = u"%s %s%s%s" % (self.street.iname, house, housing, building)
+
+        if self.city:
+            str = self.city + "; " + str
+
+        return str.strip()
 
     full_string.short_description = u"Полное наименование"
 
@@ -229,9 +234,9 @@ class HealingObject(BaseModel):
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     full_name = fields.CharField(u"Полное наименование", max_length=2048,
-                                 help_text=u"Государственное казенное учреждение здравоохранения города Москвы «Десткая городская психоневрологическая больница № 32 Департамента здравоохранения города Москвы»")
-    name = fields.CharField(u"Наименование", max_length=1024, help_text=u"ГКУЗ «Десткая городская психоневрологическая больница № 32»")
-    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"ДГПНБ № 32", null=True, blank=True)
+                                 help_text=u"Например: Государственное казенное учреждение здравоохранения города Москвы «Десткая городская психоневрологическая больница № 32 Департамента здравоохранения города Москвы»")
+    name = fields.CharField(u"Наименование", max_length=1024, help_text=u"Например: ГКУЗ «Десткая городская психоневрологическая больница № 32»")
+    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"Например: ДГПНБ № 32", null=True, blank=True)
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)

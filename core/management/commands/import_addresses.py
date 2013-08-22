@@ -61,13 +61,11 @@ class Command(BaseCommand):
             raise Exception("Invalid file headers")
         return id, district_id, street_id, house, housing, building
 
-
     def import_data(self, reader, encoding):
         _id, _district_id, _street_id, _house, _housing, _building = self.parse_header(reader.next(), encoding)
         counter = 0
         updated = 0
         created = 0
-        bulk = []
         for row in reader:
             id = row[_id].decode(encoding)
             district_id = int(row[_district_id])
@@ -76,32 +74,11 @@ class Command(BaseCommand):
             housing = row[_housing].decode(encoding)
             building = row[_building].decode(encoding)
 
-            if len(housing) == 1 and housing.isalpha():
-                house_letter = housing.upper()
-                housing = ''
-            else:
-                house_letter = ''
-
-            # address, new_created = AddressObject.objects.get_or_create(
-            #     bti_id=id,
-            #     defaults={
-            #         'house': house,
-            #         'house_letter': house_letter,
-            #         'housing': housing,
-            #         'building': building,
-            #         'street_id': street_id,
-            #         'district_id': district_id,
-            #         'created_at': timezone.now()
-            #     }
-            # )
-            # if not address.full_address_string:
-            #     address.full_address_string = address.full_string()
-            #     address.save()
-
             streets = StreetObject.objects.all().filter(bti_id=street_id)
             if len(streets) != 1:
                 raise Exception("More then one street found for id " + street_id + " at " + str(counter))
             street = streets[0]
+
             address = AddressObject()
             address.bti_id = id
             address.district_id = district_id
@@ -115,19 +92,25 @@ class Command(BaseCommand):
                 address.housing = housing
             address.building = building
             address.full_address_string = address.full_string()
-            bulk.append(address)
-            #address.save()
-            created += 1
 
-            # if new_created:
-            #     created += 1
-            # else:
-            #     updated += 1
+            record_updated = AddressObject.objects.filter(bti_id=id).update(
+                district=address.district_id,
+                street=street.id,
+                house=address.house,
+                house_letter=address.house_letter,
+                housing=address.housing,
+                building=address.building,
+                full_address_string=address.full_string()
+            )
+
+            if not record_updated:
+                created += 1
+                address.save()
+            else:
+                updated += 1
 
             counter += 1
-            if counter % 100 == 0:
+            if counter % 500 == 0:
                 print "Updated: %d; Created: %d" % (updated, created)
-                AddressObject.objects.bulk_create(bulk)
-                bulk = []
 
 

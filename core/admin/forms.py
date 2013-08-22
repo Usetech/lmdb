@@ -8,7 +8,7 @@ from django.template import Context
 from django.template.loader import get_template
 from guardian.models import UserObjectPermission
 from selectable.forms import AutoCompleteSelectWidget
-from core.admin.lookups import LegalEntityLookup, AddressObjectLookup
+from core.admin.lookups import LegalEntityLookup, AddressObjectLookup, HealingObjectLookup, StreetLookup
 
 __author__ = 'sergio'
 
@@ -39,7 +39,8 @@ class ServiceForm(InfoForm):
             # 'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             # 'specialization': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             # 'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'chief_original_name': TextInput(attrs={'rows': 1, 'class': 'vLargeTextField'})
+            'chief_original_name': TextInput(attrs={'rows': 1, 'class': 'vLargeTextField'}),
+            'healing_object': AutoCompleteSelectWidget(lookup_class=HealingObjectLookup)
         }
 
 
@@ -49,10 +50,17 @@ class NamedModelForm(ModelForm):
             'name': TextInput(attrs={'class': 'vLargeTextField'})
         }
 
+
+class AddressObjectForm(ModelForm):
+    class Meta:
+        widgets = {
+            'street': AutoCompleteSelectWidget(lookup_class=StreetLookup)
+        }
+
 user_manager_fields = ('manager_user', 'user_password', 'send_email')
 user_manager_fieldset = (
     u"Управляющий пользователь", {
-        'classes': ('suit-tab suit-tab-general',),
+        'classes': ('suit-tab suit-tab-general', 'grp-collapse grp-closed'),
         'fields': (user_manager_fields,)
     }
 )
@@ -124,7 +132,10 @@ def get_user_manager_form(model_type, permission, group_name, email_subject, ema
             widgets = {
                 'chief_original_name': TextInput(attrs={'class': 'vLargeTextField'}),
                 'legal_entity': AutoCompleteSelectWidget(lookup_class=LegalEntityLookup),
-                'address': AutoCompleteSelectWidget(lookup_class=AddressObjectLookup)
+                'address': AutoCompleteSelectWidget(lookup_class=AddressObjectLookup),
+                'jur_address': AutoCompleteSelectWidget(lookup_class=AddressObjectLookup),
+                'fact_address': AutoCompleteSelectWidget(lookup_class=AddressObjectLookup),
+                'parent': AutoCompleteSelectWidget(lookup_class=HealingObjectLookup)
             }
 
     return ManagerUserForm

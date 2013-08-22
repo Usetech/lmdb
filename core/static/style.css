@@ -1,0 +1,23 @@
+.ui-autocomplete-input {
+    width:738px !important;
+}
+
+.ui-menu li:first-child span {
+    display: inline;
+    padding: 0;
+    color: #004da7;
+}
+
+.ui-autocomplete.ui-menu li a {
+    border:none;
+    background: transparent !important;
+    border-bottom: 1px dotted silver;
+}
+.ui-autocomplete.ui-menu li #ui-active-menuitem {
+    background: #1663a3 !important;
+    border:none;
+}
+
+.ui-menu li:first-child #ui-active-menuitem span {
+    color:yellow;
+}

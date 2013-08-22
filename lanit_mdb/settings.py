@@ -215,6 +215,8 @@ LOGGING = {
     },
 }
 
+GRAPPELLI_ADMIN_TITLE = u"Реестр медицинский учреждений"
+
 RAVEN_CONFIG = {
     'dsn': 'http://94f5ae379506448f973e956b043ced37:485379956a9b4752a50590a57a2abc78@uat.geconn.ru:11000/16',
 }
