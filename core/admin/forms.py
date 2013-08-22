@@ -2,13 +2,13 @@
 from django.conf.global_settings import DEFAULT_FROM_EMAIL
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import EmailMessage
 from django.forms import ModelForm, TextInput, forms, fields
-from django.template import Template, Context
+from django.template import Context
 from django.template.loader import get_template
 from guardian.models import UserObjectPermission
-from suit.widgets import EnclosedInput, AutosizedTextarea
-from core.models import LegalEntity
+from selectable.forms import AutoCompleteSelectWidget
+from core.admin.lookups import LegalEntityLookup
 
 __author__ = 'sergio'
 
@@ -16,15 +16,15 @@ __author__ = 'sergio'
 class InfoForm(ModelForm):
     class Meta:
         widgets = {
-            'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+            #'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
         }
 
 
 class HealingObjectForm(ModelForm):
     class Meta:
         widgets = {
-            'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'full_name': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xxlarge'}),
+            #'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+            #'full_name': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xxlarge'}),
             'name': TextInput(attrs={'class': 'input-xxlarge'}),
             'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
         }
@@ -33,12 +33,12 @@ class HealingObjectForm(ModelForm):
 class ServiceForm(InfoForm):
     class Meta:
         widgets = {
-            'phone': EnclosedInput(prepend='icon-headphones'),
-            'fax': EnclosedInput(prepend='icon-print'),
-            'site_url': EnclosedInput(prepend='icon-globe'),
-            'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'specialization': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+            # 'phone': EnclosedInput(prepend='icon-headphones'),
+            # 'fax': EnclosedInput(prepend='icon-print'),
+            # 'site_url': EnclosedInput(prepend='icon-globe'),
+            # 'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+            # 'specialization': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
+            # 'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
         }
 
@@ -122,7 +122,8 @@ def get_user_manager_form(model_type, permission, group_name, email_subject, ema
             model = model_type
 
             widgets = {
-                'chief_original_name': TextInput(attrs={'class': 'input-xxlarge'})
+                'chief_original_name': TextInput(attrs={'class': 'input-xxlarge'}),
+                'legal_entity': AutoCompleteSelectWidget(lookup_class=LegalEntityLookup)
             }
 
     return ManagerUserForm

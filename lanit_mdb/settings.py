@@ -150,8 +150,8 @@ TEMPLATE_DIRS = (
 
 INSTALLED_APPS = (
     'south',
-    'suit',
-    #'grappelli',
+    #'suit',
+    'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -165,6 +165,7 @@ INSTALLED_APPS = (
     'core',
     'guardian',
     'raven.contrib.django.raven_compat',
+    'selectable'
 )
 
 # A sample logging configuration. The only tangible logging
@@ -212,21 +213,6 @@ LOGGING = {
             'propagate': False,
         },
     },
-}
-
-
-SUIT_CONFIG = {
-    'ADMIN_NAME': u'Мед. учреждения',
-    'CONFIRM_UNSAVED_CHANGES': True,
-    'MENU': (
-        {'app': 'core',
-         'label': u'Медучреждения',
-         'icon':'icon-plus',
-         'models': ('legalentity', 'healingobject', 'service', 'addressobject', 'healthobjectype', 'servicetype')
-        },
-        # Rename app and set icon
-        {'app': 'auth', 'label': u'Пользователи', 'icon':'icon-lock'}
-    )
 }
 
 RAVEN_CONFIG = {
