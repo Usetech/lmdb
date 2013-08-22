@@ -281,7 +281,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
     list_filter = ('object_type',)
     list_display_links = ['object_type', 'name']
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
-    raw_id_fields = ('address', 'parent', 'legal_entity')
+    raw_id_fields = ('address', 'parent')
     readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors', 'original_address')
     fieldsets = BaseModelAdmin.fieldsets_tab + (
         (

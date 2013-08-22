@@ -8,7 +8,7 @@ from django.template import Context
 from django.template.loader import get_template
 from guardian.models import UserObjectPermission
 from selectable.forms import AutoCompleteSelectWidget
-from core.admin.lookups import LegalEntityLookup
+from core.admin.lookups import LegalEntityLookup, AddressObjectLookup
 
 __author__ = 'sergio'
 
@@ -25,8 +25,8 @@ class HealingObjectForm(ModelForm):
         widgets = {
             #'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             #'full_name': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xxlarge'}),
-            'name': TextInput(attrs={'class': 'input-xxlarge'}),
-            'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
+            'name': TextInput(attrs={'class': 'vLargeTextField'}),
+            'chief_original_name': TextInput(attrs={'class': 'vLargeTextField'})
         }
 
 
@@ -39,14 +39,14 @@ class ServiceForm(InfoForm):
             # 'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             # 'specialization': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             # 'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'chief_original_name': TextInput(attrs={'rows': 1, 'class':'vLargeTextField'})
+            'chief_original_name': TextInput(attrs={'rows': 1, 'class': 'vLargeTextField'})
         }
 
 
 class NamedModelForm(ModelForm):
     class Meta:
         widgets = {
-            'name': TextInput(attrs={'class': 'input-xxlarge'})
+            'name': TextInput(attrs={'class': 'vLargeTextField'})
         }
 
 user_manager_fields = ('manager_user', 'user_password', 'send_email')
@@ -122,8 +122,9 @@ def get_user_manager_form(model_type, permission, group_name, email_subject, ema
             model = model_type
 
             widgets = {
-                'chief_original_name': TextInput(attrs={'class': 'input-xxlarge'}),
-                'legal_entity': AutoCompleteSelectWidget(lookup_class=LegalEntityLookup)
+                'chief_original_name': TextInput(attrs={'class': 'vLargeTextField'}),
+                'legal_entity': AutoCompleteSelectWidget(lookup_class=LegalEntityLookup),
+                'address': AutoCompleteSelectWidget(lookup_class=AddressObjectLookup)
             }
 
     return ManagerUserForm
