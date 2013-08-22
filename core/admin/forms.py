@@ -39,7 +39,7 @@ class ServiceForm(InfoForm):
             # 'info': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             # 'specialization': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
             # 'departments': AutosizedTextarea(attrs={'rows': 3, 'class': 'input-xlarge'}),
-            'chief_original_name': TextInput(attrs={'class':'input-xxlarge'})
+            'chief_original_name': TextInput(attrs={'rows': 1, 'class':'vLargeTextField'})
         }
 
 

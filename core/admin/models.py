@@ -38,6 +38,8 @@ class BaseModelAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('created_at', 'modified_at', 'deleted_at')
+    change_list_template = "admin/change_list_filter_sidebar.html"
+    #change_list_filter_template = "admin/filter_listing.html"
 
 
 class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
@@ -91,7 +93,8 @@ class HealingObjectServiceInline(admin.StackedInline):
         ('daysoff', 'daysoff_restrictions'),
 
         ('specialization', ),
-        ('paid_services', 'free_services',),
+        ('paid_services', ),
+        ('free_services',),
         ('drug_provisioning', 'hospital_beds'),
         ('departments',),
         ('hospital_levels',),
@@ -158,6 +161,9 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
         chief_fields,
         user_manager_fieldset
     )
+
+    change_list_template = "admin/change_list_filter_sidebar.html"
+    change_list_filter_template = "admin/filter_listing.html"
 
     def save_model(self, request, obj, form, change):
         obj.save()
@@ -253,7 +259,8 @@ class ServiceAdmin(BaseGuardedModelAdmin):
             {
                 'fields': (
                     ('specialization', ),
-                    ('paid_services', 'free_services',),
+                    ('paid_services', ),
+                    ('free_services',),
                     ('drug_provisioning', 'hospital_beds'),
                     ('departments',),
                     ('hospital_levels',),
@@ -275,7 +282,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
     list_display_links = ['object_type', 'name']
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
     raw_id_fields = ('address', 'parent', 'legal_entity')
-    readonly_fields = ('errors', 'original_address')
+    readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors', 'original_address')
     fieldsets = BaseModelAdmin.fieldsets_tab + (
         (
             u"Основные параметры",
