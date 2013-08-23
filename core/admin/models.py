@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 from guardian.admin import GuardedModelAdmin
-from guardian.models import UserObjectPermission
+from guardian.models import UserObjectPermission, User
 from guardian.utils import get_user_obj_perms_model
 from core.admin.base import LinkedInline
 from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter
@@ -189,11 +189,21 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
         except:
             pass
 
-        if len(obj.healing_objects.all()):
-            [UserObjectPermission.objects.assign_perm('change_healingobject', request.user, ho) for ho in
-             obj.healing_objects.all()]
-            [UserObjectPermission.objects.assign_perm('delete_healingobject', request.user, ho) for ho in
-             obj.healing_objects.all()]
+        try:
+            if len(obj.healing_objects.all()):
+                if obj.manager_user:
+                    usr = User.objects.get(username=obj.manager_user)
+                else:
+                    usr = None
+                for ho in obj.healing_objects.all():
+                    UserObjectPermission.objects.assign_perm('delete_healingobject', request.user, ho)
+                    UserObjectPermission.objects.assign_perm('change_healingobject', request.user, ho)
+                    if usr:
+                        UserObjectPermission.objects.assign_perm('delete_healingobject', usr, ho)
+                        UserObjectPermission.objects.assign_perm('change_healingobject', usr, ho)
+        except:
+            pass
+
 
     inlines = [HealingObjectInline]
 
@@ -339,8 +349,17 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
         except:
             pass
 
-        if len(obj.services.all()):
-            [UserObjectPermission.objects.assign_perm('change_service', request.user, service) for service in
-             obj.services.all()]
-            [UserObjectPermission.objects.assign_perm('delete_service', request.user, service) for service in
-             obj.services.all()]
+        try:
+            if len(obj.healing_objects.all()):
+                if obj.manager_user:
+                    usr = User.objects.get(username=obj.manager_user)
+                else:
+                    usr = None
+                for svc in obj.services.all():
+                    UserObjectPermission.objects.assign_perm('change_service', request.user, svc)
+                    UserObjectPermission.objects.assign_perm('delete_service', request.user, svc)
+                    if usr:
+                        UserObjectPermission.objects.assign_perm('delete_service', usr, svc)
+                        UserObjectPermission.objects.assign_perm('change_service', usr, svc)
+        except:
+            pass
