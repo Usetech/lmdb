@@ -197,7 +197,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
         try:
             if len(obj.healing_objects.all()):
                 if obj.manager_user:
-                    usr = User.objects.get(username=obj.manager_user)
+                    usr = User.objects.get(email=obj.manager_user)
                 else:
                     usr = None
                 for ho in obj.healing_objects.all():
@@ -358,7 +358,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
         try:
             if len(obj.healing_objects.all()):
                 if obj.manager_user:
-                    usr = User.objects.get(username=obj.manager_user)
+                    usr = User.objects.get(email=obj.manager_user)
                 else:
                     usr = None
                 for svc in obj.services.all():
