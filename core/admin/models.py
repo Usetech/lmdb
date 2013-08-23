@@ -1,9 +1,14 @@
 # coding=utf-8
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
 from guardian.admin import GuardedModelAdmin
+from guardian.models import UserObjectPermission, User
 from guardian.utils import get_user_obj_perms_model
-from core.admin.forms import ServiceForm, HealingObjectForm, NamedModelForm, get_user_manager_form, user_manager_fieldset
+from core.admin.base import LinkedInline
+from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter
+from core.admin.forms import ServiceForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields, AddressObjectForm
+from core.admin.tools import StatusAdminMixin
 from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType, StreetObject, DistrictObject, Service, HealingObject
 
 __author__ = 'sergio'
@@ -11,7 +16,7 @@ __author__ = 'sergio'
 chief_fields = (
     u"Руководитель ",
     {
-        'classes': ('suit-tab suit-tab-general',),
+        'classes': ('suit-tab suit-tab-general ', 'grp-collapse grp-closed',),
         'fields': (
             ("chief_original_name",),
             ("chief_sex", "chief_position"),
@@ -24,19 +29,22 @@ class BaseModelAdmin(admin.ModelAdmin):
     model = BaseModel
     base_fields = ('created_at', 'modified_at', 'deleted_at')
     list_display = ('modified_at', )
+    list_select_related = True
     fieldsets = (
-        (u'Создание/изменение/удаление', {
+        (u"", {
             'fields': (base_fields,),
             'classes': ('collapse',),
         }),
     )
     fieldsets_tab = (
-        (u'Создание/изменение/удаление', {
+        (u"", {
             'fields': (base_fields,),
             'classes': ('collapse suit-tab suit-tab-general',),
         }),
     )
     readonly_fields = ('created_at', 'modified_at', 'deleted_at')
+    change_list_template = "admin/change_list_filter_sidebar.html"
+    #change_list_filter_template = "admin/filter_listing.html"
 
 
 class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
@@ -45,25 +53,32 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         if request.user.is_superuser:
             return qs
         user_model = get_user_obj_perms_model(self.model)
+        ct = ContentType.objects.get_for_model(self.model)
         user_obj_perms_queryset = (user_model.objects
                                    .filter(user=request.user)
-                                   .filter(permission__content_type=ContentType.objects.get_for_model(self.model))).values_list('object_pk', flat=True)
-        if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
-            qs = qs.filter(pk__in=map(int, user_obj_perms_queryset))
-        return qs
+                                   .filter(permission__content_type=ct)).values_list('object_pk', flat=True)
+        pname = '%s.viewall_%s' % (ct.app_label, ct.model)
+        if request.user.has_perm(pname) and not len(user_obj_perms_queryset):
+            return qs
+        #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
+        return qs.filter(pk__in=map(int, user_obj_perms_queryset))
 
 
 class AddressObjectAdmin(BaseModelAdmin):
     model = AddressObject
+    form = AddressObjectForm
     search_fields = ('street__name', 'district__name')
-    raw_id_fields = ('street',)
     list_select_related = True
+    list_filter = ('city', 'district')
     fieldsets = BaseModelAdmin.fieldsets + (
         (
             u"Основные параметры",
             {
                 'fields': (
                     ('zip_code',),
+                    ('area',),
+                    ('city',),
+                    ('city_type',),
                     ('district',),
                     ('street',),
                     ('house', 'house_letter'),
@@ -72,10 +87,10 @@ class AddressObjectAdmin(BaseModelAdmin):
             }
         ),
     )
-    list_display = ('district', 'street', 'house', 'house_letter', 'housing', 'building', 'full_address_string')
+    list_display = ('full_address_string', 'city', 'district', 'street', 'house', 'house_letter', 'housing', 'building')
 
 
-class HealingObjectServiceInline(admin.StackedInline):
+class HealingObjectServiceInline(LinkedInline):
     model = Service
     form = ServiceForm
     raw_id_fields = ('healing_object',)
@@ -91,7 +106,8 @@ class HealingObjectServiceInline(admin.StackedInline):
         ('daysoff', 'daysoff_restrictions'),
 
         ('specialization', ),
-        ('paid_services', 'free_services',),
+        ('paid_services', ),
+        ('free_services',),
         ('drug_provisioning', 'hospital_beds'),
         ('departments',),
         ('hospital_levels',),
@@ -100,42 +116,44 @@ class HealingObjectServiceInline(admin.StackedInline):
         ('drugstore_type',),
         ('hospital_type',),
     )
-    suit_classes = 'suit-tab suit-tab-services'
+    ordering = ('service__name',)
+    classes = ('grp-collapse grp-open',)
+    inline_classes = ('grp-collapse grp-open',)
     extra = 0
 
 
-class HealingObjectInline(admin.StackedInline):
+class HealingObjectInline(LinkedInline):
     model = HealingObject
-    form = HealingObjectForm
-    raw_id_fields = ('address',)
-    related_lookup_fields = {
-        'fk': ['address']
-    }
+    form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения",
+                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения",
+                                 "email/welcome_healingobject.html")
     fields = (
-        ('object_type',),
-        ('address', ),
-        ('full_name',),
-        ('name',),
-        ('short_name',),
-        ('global_id',),
-        ('info', )
-    )
+                 ('status',),
+                 ('object_type',),
+                 ('address', ),
+                 ('full_name',),
+                 ('name',),
+                 ('short_name',),
+                 ('global_id',),
+                 ('info', )
+             ) + user_manager_fields
+
+    ordering = ('name',)
     extra = 0
     suit_classes = 'suit-tab suit-tab-healings'
 
 
-class LegalEntityAdmin(BaseGuardedModelAdmin):
-    model = LegalEntity
-    form = get_user_manager_form(LegalEntity, 'change_legalentity', u"Управляющие юрлицами")
-    date_hierarchy = 'modified_at'
-    search_fields = ('name', 'chief_original_name', 'manager_user')
-    list_filter = ('deleted_at',)
-    list_display_links = ['id', 'name']
-    list_display = ('id', 'name', 'chief_original_name', 'manager_user', ) + BaseModelAdmin.list_display
-    raw_id_fields = ('jur_address', 'fact_address')
-    related_lookup_fields = {
-        'fk': ['jur_address', 'fact_address']
-    }
+class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
+    #model = LegalEntity
+    form = get_user_manager_form(LegalEntity, 'change_legalentity', u"Управляющие юрлицами",
+                                 u"Реестр МУ: требуется актуализация информации по юридическому лицу",
+                                 "email/welcome_legalentity.html")
+    search_fields = ('name', 'chief_original_name', 'manager_user', 'fact_address__full_address_string')
+    list_filter = ('status', LegalEntityServiceTypeListFilter, 'fact_address__district')
+    list_display_links = ['name']
+    readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors',)
+    list_display = ('name', 'fact_address', 'show_number_healingobjects') + BaseModelAdmin.list_display + (
+        'get_status_name',)
     suit_form_tabs = (('general', u'Основные'), ('healings', u'Объекты здравоохранения'))
     #user_can_access_owned_objects_only = True
     fieldsets = BaseModelAdmin.fieldsets_tab + (
@@ -144,17 +162,45 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
             {
                 'classes': ('suit-tab suit-tab-general',),
                 'fields': (
+                    ('status',),
                     ("name",),
                     ("ogrn_code",),
                     ("inn_code",),
                     ("jur_address",),
-                    ("fact_address",)
+                    ("fact_address",),
+                    ('errors',)
                 )
             }
         ),
         chief_fields,
         user_manager_fieldset
     )
+
+    def show_number_healingobjects(self, item):
+        return item.number_healingobjects
+
+    show_number_healingobjects.admin_order_field = 'number_healingobjects'
+    show_number_healingobjects.short_description = u"Кол-во МУ"
+
+    def queryset(self, request):
+        return super(LegalEntityAdmin, self).queryset(request).annotate(
+            number_healingobjects=Count('healing_objects')).select_related(
+            'fact_address', 'fact_address__street')
+
+    def save_model(self, request, obj, form, change):
+        obj.save()
+
+        try:
+            if obj.manager_user:
+                usr = User.objects.get(email=obj.manager_user)
+            else:
+                usr = None
+
+            LegalEntity.objects.assign_permissions(obj, request.user, usr)
+        except:
+            pass
+
+
     inlines = [HealingObjectInline]
 
 
@@ -187,7 +233,7 @@ class ServiceTypeAdmin(NamedModelAdmin):
 class StreetObjectAdmin(BaseModelAdmin):
     model = StreetObject
     date_hierarchy = "modified_at"
-    search_fields = ("name", )
+    search_fields = ("name", "iname")
     fieldsets = BaseModelAdmin.fieldsets + (
         (
             u"Основные параметры", {
@@ -196,21 +242,17 @@ class StreetObjectAdmin(BaseModelAdmin):
         ),
     )
     list_filter = ("valid",)
-    list_display = ("id", "name", "valid",) + BaseModelAdmin.list_display
+    list_display = ("id", "iname", "name", "valid",) + BaseModelAdmin.list_display
 
 
 class DistrictObjectAdmin(NamedModelAdmin):
     model = DistrictObject
 
 
-class ServiceAdmin(BaseModelAdmin):
+class ServiceAdmin(BaseGuardedModelAdmin):
     model = Service
     form = ServiceForm
-    raw_id_fields = ('healing_object',)
-    related_lookup_fields = {
-        'fk': ['healing_object']
-    }
-    list_filter = ('modified_at', 'deleted_at', 'service')
+    list_filter = ('service', 'modified_at')
     list_display = ('healing_object', 'service', 'modified_at')
     fieldsets = BaseModelAdmin.fieldsets + (
         (
@@ -228,21 +270,14 @@ class ServiceAdmin(BaseModelAdmin):
                 )
             }
         ),
-        (
-            u"Руководитель ",
-            {
-                'fields': (
-                    ("chief_original_name",),
-                    ("chief_sex", "chief_position"),
-                )
-            }
-        ),
+        chief_fields,
         (
             u"Информация по услуге",
             {
                 'fields': (
                     ('specialization', ),
-                    ('paid_services', 'free_services',),
+                    ('paid_services', ),
+                    ('free_services',),
                     ('drug_provisioning', 'hospital_beds'),
                     ('departments',),
                     ('hospital_levels',),
@@ -256,20 +291,23 @@ class ServiceAdmin(BaseModelAdmin):
     )
 
 
-class HealingObjectAdmin(BaseGuardedModelAdmin):
+class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     model = HealingObject
-    form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения")
-    list_filter = ('object_type',)
-    list_display_links = ['object_type', 'name']
+    form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения",
+                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения",
+                                 "email/welcome_healingobject.html")
+    list_filter = ('status', HealingObjectServiceTypeListFilter, 'object_type',)
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
-    raw_id_fields = ('address', 'parent')
-    readonly_fields = ('errors', 'original_address')
+    search_fields = ('object_type__name', 'name', 'address__full_address_string')
+    list_display = ('name', 'address', 'object_type', 'show_number_services', 'modified_at', 'get_status_name')
+    readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors', 'original_address')
     fieldsets = BaseModelAdmin.fieldsets_tab + (
         (
             u"Основные параметры",
             {
                 'classes': ('suit-tab suit-tab-general',),
                 'fields': (
+                    ('status',),
                     ('parent',),
                     ('legal_entity',),
                     ('object_type',),
@@ -286,6 +324,30 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
         ),
         user_manager_fieldset
     )
-    search_fields = ('object_type__name', 'name', 'address__street__name')
-    list_display = ('object_type', 'name', 'address', 'manager_user', 'modified_at', 'deleted_at', 'errors')
+
+    def show_number_services(self, item):
+        return item.number_services
+
+    show_number_services.admin_order_field = 'number_services'
+    show_number_services.short_description = u"Кол-во услуг"
+
+    def queryset(self, request):
+        return super(HealingObjectAdmin, self).queryset(request).annotate(
+            number_services=Count('services')).select_related('address',
+                                                              'address__street',
+                                                              'object_type')
+
     inlines = [HealingObjectServiceInline]
+
+    def save_model(self, request, obj, form, change):
+        obj.save()
+
+        try:
+            if obj.manager_user:
+                usr = User.objects.get(email=obj.manager_user)
+            else:
+                usr = None
+
+            HealingObject.objects.assign_permissions(obj, request.user, usr)
+        except:
+            pass
