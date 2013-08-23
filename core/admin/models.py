@@ -179,7 +179,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     show_number_healingobjects.short_description = u"Кол-во МУ"
 
     def queryset(self, request):
-        return super(LegalEntityAdmin,self).queryset(request).annotate(number_healingobjects=Count('healing_objects')).select_related(
+        return super(LegalEntityAdmin, self).queryset(request).annotate(number_healingobjects=Count('healing_objects')).select_related(
             'fact_address', 'fact_address__street')
 
     def save_model(self, request, obj, form, change):
@@ -188,6 +188,12 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
             UserObjectPermission.objects.assign_perm('change_legalentity', request.user, obj)
         except:
             pass
+
+        if len(obj.healing_objects.all()):
+            [UserObjectPermission.objects.assign_perm('change_healingobject', request.user, ho) for ho in
+             obj.healing_objects.all()]
+            [UserObjectPermission.objects.assign_perm('delete_healingobject', request.user, ho) for ho in
+             obj.healing_objects.all()]
 
     inlines = [HealingObjectInline]
 
@@ -240,7 +246,7 @@ class DistrictObjectAdmin(NamedModelAdmin):
 class ServiceAdmin(BaseGuardedModelAdmin):
     model = Service
     form = ServiceForm
-    list_filter = ('modified_at', 'deleted_at', 'service')
+    list_filter = ('service', 'modified_at')
     list_display = ('healing_object', 'service', 'modified_at')
     fieldsets = BaseModelAdmin.fieldsets + (
         (
