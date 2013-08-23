@@ -179,7 +179,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     show_number_healingobjects.short_description = u"Кол-во МУ"
 
     def queryset(self, request):
-        return LegalEntity.objects.annotate(number_healingobjects=Count('healing_objects')).select_related(
+        return super(LegalEntityAdmin,self).queryset(request).annotate(number_healingobjects=Count('healing_objects')).select_related(
             'fact_address', 'fact_address__street')
 
     def save_model(self, request, obj, form, change):
@@ -320,7 +320,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     show_number_services.short_description = u"Кол-во услуг"
 
     def queryset(self, request):
-        return HealingObject.objects.annotate(number_services=Count('services')).select_related('address',
+        return super(HealingObjectAdmin,self).queryset(request).annotate(number_services=Count('services')).select_related('address',
                                                                                                 'address__street',
                                                                                                 'object_type')
 
