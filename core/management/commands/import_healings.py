@@ -67,9 +67,9 @@ class Command(BaseCommand):
 
 
     def get_streets(self, header, row, street, encoding):
-        city = row[header["ADRES_NASELENPUNKT"]].decode(encoding)
-        city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower()
-        street_type = row[header["ADRES_UL_TYPE"]].decode(encoding).lower()
+        city = row[header["ADRES_NASELENPUNKT"]].decode(encoding).strip()
+        city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower().strip()
+        street_type = row[header["ADRES_UL_TYPE"]].decode(encoding).lower().strip()
         if self.is_default_city(city, city_type):
             return StreetObject.objects.all().filter(name=street)
         iname = street + " " + street_type + " (" + self.get_full_city_name(city, city_type) + ")"
@@ -84,12 +84,12 @@ class Command(BaseCommand):
         return [so,]
 
     def get_address(self, header, row, streets, encoding, number):
-        city = row[header["ADRES_NASELENPUNKT"]].decode(encoding)
-        city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower()
-        house = row[header["ADRES_DOM"]].decode(encoding).upper()
-        house_letter = row[header["ADRES_DOM_litera"]].decode(encoding).upper()
-        housing = row[header["ADRES_KORPUS"]].decode(encoding)
-        building = row[header["ADRES_STROENIE"]].decode(encoding)
+        city = row[header["ADRES_NASELENPUNKT"]].decode(encoding).strip()
+        city_type = row[header["NASELEN_PUNKT"]].decode(encoding).lower().strip()
+        house = row[header["ADRES_DOM"]].decode(encoding).upper().strip()
+        house_letter = row[header["ADRES_DOM_litera"]].decode(encoding).upper().strip()
+        housing = row[header["ADRES_KORPUS"]].decode(encoding).strip()
+        building = row[header["ADRES_STROENIE"]].decode(encoding).strip()
 
         addresses = self.get_addresses(city, city_type, streets, house, house_letter, housing, building)
         if len(addresses) == 0 and len(housing) > 0:
@@ -99,8 +99,8 @@ class Command(BaseCommand):
         if len(addresses) == 0 and len(house_letter):
             addresses = self.get_addresses(city, city_type, streets, house + house_letter, '', building, housing)
 
-        if len(addresses) == 0 and self.is_default_city(city, city_type):
-            zip_code = row[header["ADRES_INDEX"]].decode(encoding)
+        if len(addresses) == 0 and not self.is_default_city(city, city_type):
+            zip_code = row[header["ADRES_INDEX"]].decode(encoding).strip()
             if len(zip_code) > 6:
                 return None, u"Ошибка в индексе"
             address = AddressObject()
@@ -112,7 +112,7 @@ class Command(BaseCommand):
             address.housing = housing
             address.building = building
             address.zip_code = zip_code
-            address.area = row[header["ADRES_OBL"]].decode(encoding)
+            address.area = row[header["ADRES_OBL"]].decode(encoding).strip()
             address.full_address_string = address.full_string()
             address.save()
             return address, u"Новый адрес"
@@ -151,8 +151,8 @@ class Command(BaseCommand):
 
 
     def fill_chief_data(self, header, row, data, number, encoding):
-        data.chief_original_name = row[header["RUKOVODIT"]].decode(encoding)
-        sex = row[header["R_POL"]].decode(encoding).lower()
+        data.chief_original_name = row[header["RUKOVODIT"]].decode(encoding).strip()
+        sex = row[header["R_POL"]].decode(encoding).lower().strip()
         if sex == u"муж" or sex == u"м":
             data.chief_sex = 'M'
         elif sex == u"жен" or sex == u"ж":
@@ -161,7 +161,7 @@ class Command(BaseCommand):
             if len(sex) > 0:
                 stderr.write(u"Unknown sex at " + str(number))
             data.chief_sex = None
-        data.chief_phone = row[header["R_TEL_NOMER"]].decode(encoding)
+        data.chief_phone = row[header["R_TEL_NOMER"]].decode(encoding).strip()
 
 
     def import_le_data(self, reader, encoding):
@@ -177,16 +177,16 @@ class Command(BaseCommand):
             print "Processing row", counter
             counter += 1
 
-            lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
+            lpu = row[header["GLAVNOE_LPU"]].decode(encoding).strip()
             if len(lpu) == 0:
-                lpu = row[header["NAME"]].decode(encoding)
+                lpu = row[header["NAME"]].decode(encoding).strip()
             if len(lpu) == 0:
                 stderr.write("Legal entity name is empty at %d\n" % (counter))
                 continue
             if legal_entities.has_key(lpu):
                 continue
 
-            street = row[header["ADRES_UL_NAME"]].decode(encoding)
+            street = row[header["ADRES_UL_NAME"]].decode(encoding).strip()
             address = None
             error = None
             if len(street) == 0:
@@ -207,10 +207,10 @@ class Command(BaseCommand):
 
             le = LegalEntity()
             le.name = lpu
-            le.original_name = row[header["NAME"]].decode(encoding)
+            le.original_name = row[header["NAME"]].decode(encoding).strip()
             self.fill_chief_data(header, row, le, counter, encoding)
             le.fact_address = address
-            le.original_address = row[header["ADRES_STR"]].decode(encoding)
+            le.original_address = row[header["ADRES_STR"]].decode(encoding).strip()
             le.errors = error
             try:
                 le.clean_fields()
@@ -241,14 +241,14 @@ class Command(BaseCommand):
         for row in reader:
             print "Processing row", counter
             counter += 1
-            lpu = row[header["GLAVNOE_LPU"]].decode(encoding)
+            lpu = row[header["GLAVNOE_LPU"]].decode(encoding).strip()
             if len(lpu) == 0:
-                lpu = row[header["NAME"]].decode(encoding)
+                lpu = row[header["NAME"]].decode(encoding).strip()
             if len(lpu) == 0:
                 stderr.write("Legal entity name is empty at %d" % (counter))
                 continue
             lpu = legal_entities[lpu]
-            hotype = row[header["TYPE"]].decode(encoding)
+            hotype = row[header["TYPE"]].decode(encoding).strip()
             if len(hotype) == 0:
                 stderr.write(u"Empty type at %d\n" % (str(counter + 3),))
                 empty_types += 1
@@ -257,7 +257,7 @@ class Command(BaseCommand):
             if created:
                 created_types += 1
 
-            street = row[header["ADRES_UL_NAME"]].decode(encoding)
+            street = row[header["ADRES_UL_NAME"]].decode(encoding).strip()
             address = None
             if len(street) == 0:
                 stderr.write(u"Empty street at %d\n" % (counter + 3,))
@@ -280,13 +280,13 @@ class Command(BaseCommand):
             mu.legal_entity = lpu
             #self.fill_chief_data(header, row, mu, counter + 3, encoding)
             mu.address = address
-            mu.original_address = row[header["ADRES_STR"]].decode(encoding)
-            name = row[header["NAME"]].decode(encoding)
+            mu.original_address = row[header["ADRES_STR"]].decode(encoding).strip()
+            name = row[header["NAME"]].decode(encoding).strip()
             mu.name = name
-            mu.short_name = row[header["SHORT_NAME"]].decode(encoding)
-            mu.full_name = row[header["FULL_NAME"]].decode(encoding) or name
-            mu.global_id = row[header["GLOBALID"]]
-            mu.info = row[header["INFO"]].decode(encoding)
+            mu.short_name = row[header["SHORT_NAME"]].decode(encoding).strip()
+            mu.full_name = row[header["FULL_NAME"]].decode(encoding).strip() or name
+            mu.global_id = row[header["GLOBALID"]].strip()
+            mu.info = row[header["INFO"]].decode(encoding).strip()
             mu.errors = error
             try:
                 mu.clean_fields()
@@ -300,28 +300,28 @@ class Command(BaseCommand):
             service_type_name = object_type_to_service_type[hotype.name]
             service.service = ServiceType.objects.get(name=service_type_name)
             self.fill_chief_data(header, row, service, counter + 3, encoding)
-            service.phone = row[header["TEL_NOMER"]].decode(encoding)
-            service.fax = row[header["FAX_NOMER"]].decode(encoding)
-            service.info = row[header["INFO"]].decode(encoding)
-            service.workdays = row[header["DNY_RABOTY1"]].decode(encoding)
-            service.workhours = row[header["CHAS_RABOTY"]].decode(encoding)
-            service.daysoff = row[header["DNY_NE_RABOT"]].decode(encoding)
-            service.daysoff_restrictions = row[header["VYHODNOJ_TYPE"]].decode(encoding)
-            service.specialization = row[header["SPECIAL"]].decode(encoding)
-            service.paid_services = row[header["PLAT_USLUGI"]].decode(encoding)
-            service.free_services = row[header["BESPL_USLUGI"]].decode(encoding)
-            service.drug_provisioning = row[header["LEK_OBESP"]].decode(encoding)
-            service.departments = row[header["OTDELENIE"]].decode(encoding)
-            service.hospital_levels = row[header["LVL"]].decode(encoding)
-            service.tour = row[header["SMENA"]].decode(encoding)
-            service.receipes_provisioning = row[header["RECEPT"]].decode(encoding)
-            service.drugstore_type = row[header["DRUGSTORE_TYPE"]].decode(encoding)
-            service.hospital_type = row[header["HOSPITAL_TYPE"]].decode(encoding)
-            beds = row[header["KOIKI"]].decode(encoding)
+            service.phone = row[header["TEL_NOMER"]].decode(encoding).strip()
+            service.fax = row[header["FAX_NOMER"]].decode(encoding).strip()
+            service.info = row[header["INFO"]].decode(encoding).strip()
+            service.workdays = row[header["DNY_RABOTY1"]].decode(encoding).strip()
+            service.workhours = row[header["CHAS_RABOTY"]].decode(encoding).strip()
+            service.daysoff = row[header["DNY_NE_RABOT"]].decode(encoding).strip()
+            service.daysoff_restrictions = row[header["VYHODNOJ_TYPE"]].decode(encoding).strip()
+            service.specialization = row[header["SPECIAL"]].decode(encoding).strip()
+            service.paid_services = row[header["PLAT_USLUGI"]].decode(encoding).strip()
+            service.free_services = row[header["BESPL_USLUGI"]].decode(encoding).strip()
+            service.drug_provisioning = row[header["LEK_OBESP"]].decode(encoding).strip()
+            service.departments = row[header["OTDELENIE"]].decode(encoding).strip()
+            service.hospital_levels = row[header["LVL"]].decode(encoding).strip()
+            service.tour = row[header["SMENA"]].decode(encoding).strip()
+            service.receipes_provisioning = row[header["RECEPT"]].decode(encoding).strip()
+            service.drugstore_type = row[header["DRUGSTORE_TYPE"]].decode(encoding).strip()
+            service.hospital_type = row[header["HOSPITAL_TYPE"]].decode(encoding).strip()
+            beds = row[header["KOIKI"]].decode(encoding).strip()
             if len(beds) == 0:
-                beds = row[header["KOJKA"]].decode(encoding)
+                beds = row[header["KOJKA"]].decode(encoding).strip()
                 if len(beds) == 0:
-                    beds = row[header["KOIKA"]].decode(encoding)
+                    beds = row[header["KOIKA"]].decode(encoding).strip()
             service.hospital_beds = beds
             try:
                 service.clean_fields()
@@ -335,35 +335,7 @@ class Command(BaseCommand):
         print "Empty streets: %d" % (empty_streets,)
         print "Unknown streets: %d" % (unknown_streets,)
         print "Empty types: %d" % (empty_types,)
-        #     district_id = int(row[_district_id])
-        #     street_id = int(row[_street_id])
-        #     house_letter = None
-        #     house = row[_house].decode(encoding)
-        #     housing = row[_housing].decode(encoding)
-        #     building = row[_building].decode(encoding)
-        #
-        #     if len(housing) == 1 and housing.isalpha():
-        #         house_letter = housing.upper()
-        #         housing = ''
-        #     else:
-        #         house_letter = ''
-        #
-        #     address, new_created = AddressObject.objects.get_or_create(
-        #         bsi_id=id,
-        #         defaults={
-        #             'house': house,
-        #             'house_letter': house_letter,
-        #             'housing': housing,
-        #             'building': building,
-        #             'street_id': street_id,
-        #             'district_id': district_id,
-        #             'created_at': timezone.now()
-        #         }
-        #     )
-        #     if new_created:
-        #         created += 1
-        #     else:
-        #         updated += 1
+
 
     def show_validation_error(self, message, object, e):
         print message
