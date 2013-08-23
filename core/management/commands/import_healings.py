@@ -102,7 +102,7 @@ class Command(BaseCommand):
         if len(addresses) == 0 and not self.is_default_city(city, city_type):
             zip_code = row[header["ADRES_INDEX"]].decode(encoding).strip()
             if len(zip_code) > 6:
-                return None, u"Ошибка в индексе"
+                return None, u"Ошибка в индексе: " + zip_code
             address = AddressObject()
             address.city = city
             address.city_type = city_type
@@ -117,10 +117,12 @@ class Command(BaseCommand):
             address.save()
             return address, u"Новый адрес"
 
+        address_string = streets[0].name + u", дом '" + house + u"', литера '" + house_letter + u"', корпус '" +\
+                         housing + u"', строение '" + building + "'"
+
         if len(addresses) == 0:
             stderr.write(u"Unknown address at %d\n" % (number,))
-            error = u"Unknown address: " + streets[
-                0].name + u", дом '" + house + u"', литера '" + house_letter + u"', корпус '" + housing + u"', строение '" + building + "'\n"
+            error = u"Неизвестный адрес: " + address_string
             return None, error
         elif len(addresses) == 1:
             return addresses[0], None
@@ -134,10 +136,10 @@ class Command(BaseCommand):
             return address, None
         if address == None:
             stderr.write(u"Multiple invalid addresses at %d\n" % (number,))
-            error = u"Множество недействующих адресов"
+            error = u"Множество недействующих адресов для " + address_string
         else:
             stderr.write(u"Multiple valid addresses at %d\n" % (number,))
-            error = u"Множество действующих адресов"
+            error = u"Множество действующих адресов для " + address_string
         return None, error
 
 
