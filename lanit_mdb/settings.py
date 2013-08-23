@@ -16,11 +16,11 @@ FORCE_SCRIPT_NAME = "/"
 MANAGERS = ADMINS
 
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'issues@usetech.ru'
-EMAIL_HOST_PASSWORD = '52O1x7Y45ee1I9DE'
+EMAIL_HOST_USER = 'medregistry@gmail.com'
+EMAIL_HOST_PASSWORD = 'SomePassword123'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'issues@usetech.ru'
+DEFAULT_FROM_EMAIL = 'medregistry@gmail.com'
 
 DATABASES = {
 #    'default': {
@@ -55,7 +55,7 @@ TIME_ZONE = 'Europe/Moscow'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'ru'
 
 SITE_ID = 1
 
@@ -128,6 +128,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'core.middleware.FilterPersistMiddleware'
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -151,6 +152,7 @@ TEMPLATE_DIRS = (
 INSTALLED_APPS = (
     'south',
     #'suit',
+    'grappelli.dashboard',
     'grappelli',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -216,6 +218,7 @@ LOGGING = {
 }
 
 GRAPPELLI_ADMIN_TITLE = u"Реестр медицинский учреждений"
+GRAPPELLI_INDEX_DASHBOARD = 'core.dashboard.CustomIndexDashboard'
 
 RAVEN_CONFIG = {
     'dsn': 'http://94f5ae379506448f973e956b043ced37:485379956a9b4752a50590a57a2abc78@uat.geconn.ru:11000/16',

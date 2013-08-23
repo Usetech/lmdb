@@ -6,8 +6,9 @@ from guardian.admin import GuardedModelAdmin
 from guardian.models import UserObjectPermission
 from guardian.utils import get_user_obj_perms_model
 from core.admin.base import LinkedInline
-from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter, ErrorListFilter
-from core.admin.forms import ServiceForm, HealingObjectForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields, AddressObjectForm
+from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter
+from core.admin.forms import ServiceForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields, AddressObjectForm
+from core.admin.tools import StatusAdminMixin
 from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType, StreetObject, DistrictObject, Service, HealingObject
 
 __author__ = 'sergio'
@@ -54,7 +55,8 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         user_model = get_user_obj_perms_model(self.model)
         user_obj_perms_queryset = (user_model.objects
                                    .filter(user=request.user)
-                                   .filter(permission__content_type=ContentType.objects.get_for_model(self.model))).values_list('object_pk', flat=True)
+                                   .filter(
+            permission__content_type=ContentType.objects.get_for_model(self.model))).values_list('object_pk', flat=True)
         #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
         return qs.filter(pk__in=map(int, user_obj_perms_queryset))
 
@@ -111,6 +113,7 @@ class HealingObjectServiceInline(LinkedInline):
         ('drugstore_type',),
         ('hospital_type',),
     )
+    ordering = ('service__name',)
     classes = ('grp-collapse grp-open',)
     inline_classes = ('grp-collapse grp-open',)
     extra = 0
@@ -119,8 +122,10 @@ class HealingObjectServiceInline(LinkedInline):
 class HealingObjectInline(LinkedInline):
     model = HealingObject
     form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения",
-                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения", "email/welcome_healingobject.html")
+                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения",
+                                 "email/welcome_healingobject.html")
     fields = (
+                 ('status',),
                  ('object_type',),
                  ('address', ),
                  ('full_name',),
@@ -129,18 +134,22 @@ class HealingObjectInline(LinkedInline):
                  ('global_id',),
                  ('info', )
              ) + user_manager_fields
+
+    ordering = ('name',)
     extra = 0
     suit_classes = 'suit-tab suit-tab-healings'
 
 
-class LegalEntityAdmin(BaseGuardedModelAdmin):
+class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     #model = LegalEntity
     form = get_user_manager_form(LegalEntity, 'change_legalentity', u"Управляющие юрлицами",
-                                 u"Реестр МУ: требуется актуализация информации по юридическому лицу", "email/welcome_legalentity.html")
-    search_fields = ('name', 'chief_original_name', 'manager_user')
-    list_filter = (LegalEntityServiceTypeListFilter, 'modified_at')
+                                 u"Реестр МУ: требуется актуализация информации по юридическому лицу",
+                                 "email/welcome_legalentity.html")
+    search_fields = ('name', 'chief_original_name', 'manager_user', 'fact_address__full_address_string')
+    list_filter = ('status', LegalEntityServiceTypeListFilter, 'fact_address__district')
     list_display_links = ['name']
-    list_display = ('name', 'chief_original_name', 'show_number_healingobjects') + BaseModelAdmin.list_display
+    readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors',)
+    list_display = ('name', 'fact_address', 'show_number_healingobjects') + BaseModelAdmin.list_display + ('get_status_name',)
     suit_form_tabs = (('general', u'Основные'), ('healings', u'Объекты здравоохранения'))
     #user_can_access_owned_objects_only = True
     fieldsets = BaseModelAdmin.fieldsets_tab + (
@@ -149,11 +158,13 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
             {
                 'classes': ('suit-tab suit-tab-general',),
                 'fields': (
+                    ('status',),
                     ("name",),
                     ("ogrn_code",),
                     ("inn_code",),
                     ("jur_address",),
-                    ("fact_address",)
+                    ("fact_address",),
+                    ('errors',)
                 )
             }
         ),
@@ -168,7 +179,8 @@ class LegalEntityAdmin(BaseGuardedModelAdmin):
     show_number_healingobjects.short_description = u"Кол-во МУ"
 
     def queryset(self, request):
-        return LegalEntity.objects.annotate(number_healingobjects=Count('healing_objects'))
+        return LegalEntity.objects.annotate(number_healingobjects=Count('healing_objects')).select_related(
+            'fact_address', 'fact_address__street')
 
     def save_model(self, request, obj, form, change):
         obj.save()
@@ -267,13 +279,15 @@ class ServiceAdmin(BaseGuardedModelAdmin):
     )
 
 
-class HealingObjectAdmin(BaseGuardedModelAdmin):
+class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     model = HealingObject
     form = get_user_manager_form(HealingObject, 'change_healingobject', u"Управляющие объектами здравоохранения",
-                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения", "email/welcome_healingobject.html")
-    list_filter = (HealingObjectServiceTypeListFilter, ErrorListFilter, 'object_type',)
-    list_display_links = ['object_type', 'name']
+                                 u"Реестр МУ: требуется актуализация информации по объекту здравоохранения",
+                                 "email/welcome_healingobject.html")
+    list_filter = ('status', HealingObjectServiceTypeListFilter, 'object_type',)
     suit_form_tabs = (('general', u'Основные'), ('services', u'Услуги'))
+    search_fields = ('object_type__name', 'name', 'address__full_address_string')
+    list_display = ('name', 'address', 'object_type', 'show_number_services', 'modified_at', 'get_status_name')
     readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors', 'original_address')
     fieldsets = BaseModelAdmin.fieldsets_tab + (
         (
@@ -281,6 +295,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
             {
                 'classes': ('suit-tab suit-tab-general',),
                 'fields': (
+                    ('status',),
                     ('parent',),
                     ('legal_entity',),
                     ('object_type',),
@@ -305,10 +320,10 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
     show_number_services.short_description = u"Кол-во услуг"
 
     def queryset(self, request):
-        return HealingObject.objects.annotate(number_services=Count('services')).select_related('address', 'address__street')
+        return HealingObject.objects.annotate(number_services=Count('services')).select_related('address',
+                                                                                                'address__street',
+                                                                                                'object_type')
 
-    search_fields = ('object_type__name', 'name', 'address__street__name')
-    list_display = ('object_type', 'name', 'address', 'show_number_services', 'modified_at', 'errors')
     inlines = [HealingObjectServiceInline]
 
     def save_model(self, request, obj, form, change):
@@ -319,5 +334,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin):
             pass
 
         if len(obj.services.all()):
-            [UserObjectPermission.objects.assign_perm('change_service', request.user, service) for service in obj.services.all()]
-            [UserObjectPermission.objects.assign_perm('delete_service', request.user, service) for service in obj.services.all()]
+            [UserObjectPermission.objects.assign_perm('change_service', request.user, service) for service in
+             obj.services.all()]
+            [UserObjectPermission.objects.assign_perm('delete_service', request.user, service) for service in
+             obj.services.all()]

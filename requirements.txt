@@ -2,7 +2,6 @@ Django==1.5.2
 South==0.8.2
 django-guardian==1.1.1
 django-grappelli==2.4.6
-django-reversion==1.7.1
 django-selectable==0.7.0
 docutils==0.11
 psycopg2==2.5.1

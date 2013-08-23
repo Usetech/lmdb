@@ -67,7 +67,7 @@ class ServiceType(NamedModel):
 
     class Meta:
         verbose_name = u"тип услуги"
-        verbose_name_plural = u"типы услуги"
+        verbose_name_plural = u"типы услуг"
 
 
 class StreetObject(BaseModel):
@@ -89,6 +89,14 @@ class DistrictObject(NamedModel):
     class Meta:
         verbose_name = u"административный округ"
         verbose_name_plural = u"административные округа"
+
+
+status_choices = (
+    ('OK', u"Проверен"),
+    ('E', u"С ошибками"),
+    ('W', u"В работе"),
+    ('A', u"Требует актуализации"),
+)
 
 
 class AddressObject(BaseModel):
@@ -164,9 +172,7 @@ class LegalEntity(ChiefModelMixin):
     original_name = fields.CharField(u"Наименование (исх.)", max_length=256, null=True, blank=True)
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
-    inn_code = fields.CharField(u"ИНН", max_length=256, null=True, blank=True
-    #    , validators=[inn_validator]
-    )
+    inn_code = fields.CharField(u"ИНН", max_length=256, null=True, blank=True, validators=[inn_validator])
     jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, blank=True, related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
@@ -176,6 +182,8 @@ class LegalEntity(ChiefModelMixin):
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
 
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
+
+    status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
 
     def __unicode__(self):
         return self.name
@@ -243,6 +251,8 @@ class HealingObject(BaseModel):
     parent = models.ForeignKey('self', related_name='branches', null=True, blank=True, verbose_name=u"Главное ЛПУ")
 
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
+
+    status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
 
     def __unicode__(self):
         return self.name

@@ -12,12 +12,46 @@
     border:none;
     background: transparent !important;
     border-bottom: 1px dotted silver;
+    font-weight: normal;
 }
 .ui-autocomplete.ui-menu li #ui-active-menuitem {
     background: #1663a3 !important;
     border:none;
+    border-bottom: 1px dotted silver;
+    font-weight: normal;
 }
 
 .ui-menu li:first-child #ui-active-menuitem span {
     color:yellow;
+}
+
+/*
+'E': 'error',
+        'W': 'wip',
+        'OK': 'ok',
+        'A': 'act'
+
+*/
+
+span.status {
+    border-radius: 2px;
+    padding: 2px 4px;
+    white-space: nowrap;
+    color:white;
+}
+
+span.status.error {
+    background:#9f0b22;
+}
+
+span.status.wip {
+    background: #3d819f;
+}
+
+span.status.ok {
+    background: #3c9f53;
+}
+
+span.status.act {
+    color:black;
 }
