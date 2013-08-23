@@ -32,7 +32,7 @@ class CustomIndexDashboard(Dashboard):
                     u'Основные объекты',
                     collapsible=False,
                     column=1,
-                    models=('core.models.LegalEntity', 'core.models.HealingObject')
+                    models=('core.models.LegalEntity', 'core.models.HealingObject', 'core.models.Service')
                 ),
                 modules.ModelList(
                     u'Справочники',
@@ -41,7 +41,7 @@ class CustomIndexDashboard(Dashboard):
                     column=1,
                     css_classes=('opaque',),
                     models=('core.models.*', ),
-                    exclude=('core.models.LegalEntity', 'core.models.HealingObject')
+                    exclude=('core.models.LegalEntity', 'core.models.HealingObject', 'core.models.Service')
                 ),
             ]
         ))
