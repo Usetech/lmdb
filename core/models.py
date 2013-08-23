@@ -237,7 +237,7 @@ class HealingObject(BaseModel):
     Объект здравоохранения
     """
     object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
-    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=True)
+    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=False)
     address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True, blank=True)
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
