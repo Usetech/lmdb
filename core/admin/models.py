@@ -53,10 +53,12 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         if request.user.is_superuser:
             return qs
         user_model = get_user_obj_perms_model(self.model)
+        ct = ContentType.objects.get_for_model(self.model)
         user_obj_perms_queryset = (user_model.objects
                                    .filter(user=request.user)
-                                   .filter(
-            permission__content_type=ContentType.objects.get_for_model(self.model))).values_list('object_pk', flat=True)
+                                   .filter(permission__content_type=ct)).values_list('object_pk', flat=True)
+        if request.user.has_perm('viewall_' + ct.model) and not len(user_obj_perms_queryset):
+            return qs
         #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
         return qs.filter(pk__in=map(int, user_obj_perms_queryset))
 
@@ -149,7 +151,8 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     list_filter = ('status', LegalEntityServiceTypeListFilter, 'fact_address__district')
     list_display_links = ['name']
     readonly_fields = BaseGuardedModelAdmin.readonly_fields + ('errors',)
-    list_display = ('name', 'fact_address', 'show_number_healingobjects') + BaseModelAdmin.list_display + ('get_status_name',)
+    list_display = ('name', 'fact_address', 'show_number_healingobjects') + BaseModelAdmin.list_display + (
+        'get_status_name',)
     suit_form_tabs = (('general', u'Основные'), ('healings', u'Объекты здравоохранения'))
     #user_can_access_owned_objects_only = True
     fieldsets = BaseModelAdmin.fieldsets_tab + (
@@ -179,7 +182,8 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     show_number_healingobjects.short_description = u"Кол-во МУ"
 
     def queryset(self, request):
-        return super(LegalEntityAdmin, self).queryset(request).annotate(number_healingobjects=Count('healing_objects')).select_related(
+        return super(LegalEntityAdmin, self).queryset(request).annotate(
+            number_healingobjects=Count('healing_objects')).select_related(
             'fact_address', 'fact_address__street')
 
     def save_model(self, request, obj, form, change):
@@ -336,9 +340,10 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
     show_number_services.short_description = u"Кол-во услуг"
 
     def queryset(self, request):
-        return super(HealingObjectAdmin,self).queryset(request).annotate(number_services=Count('services')).select_related('address',
-                                                                                                'address__street',
-                                                                                                'object_type')
+        return super(HealingObjectAdmin, self).queryset(request).annotate(
+            number_services=Count('services')).select_related('address',
+                                                              'address__street',
+                                                              'object_type')
 
     inlines = [HealingObjectServiceInline]
 
