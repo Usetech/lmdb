@@ -8,6 +8,7 @@ from django.db import models
 # Create your models here.
 from django.db.models import fields
 from django.utils import timezone
+from core.managers import HealingObjectManager, LegalEntityManager, ServiceManager
 from core.validators import ogrn_validator, inn_validator
 
 phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123-45-67")
@@ -176,14 +177,12 @@ class LegalEntity(ChiefModelMixin):
     jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, blank=True, related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
-
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
-
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
-
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
-
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
+
+    objects = LegalEntityManager()
 
     def __unicode__(self):
         return self.name
@@ -224,6 +223,8 @@ class Service(ChiefModelMixin):
     drugstore_type = models.CharField(u"Тип аптеки", max_length=256, null=True, blank=True)
     hospital_type = models.CharField(u"Тип стационара", max_length=256, null=True, blank=True)
 
+    objects = ServiceManager()
+
     def __unicode__(self):
         return "%s" % self.service.name
 
@@ -250,10 +251,10 @@ class HealingObject(BaseModel):
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
     parent = models.ForeignKey('self', related_name='branches', null=True, blank=True, verbose_name=u"Главное ЛПУ")
-
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
-
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
+
+    objects = HealingObjectManager()
 
     def __unicode__(self):
         return self.name

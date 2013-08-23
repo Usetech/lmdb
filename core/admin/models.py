@@ -189,23 +189,14 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
-        try:
-            UserObjectPermission.objects.assign_perm('change_legalentity', request.user, obj)
-        except:
-            pass
 
         try:
-            if len(obj.healing_objects.all()):
-                if obj.manager_user:
-                    usr = User.objects.get(email=obj.manager_user)
-                else:
-                    usr = None
-                for ho in obj.healing_objects.all():
-                    UserObjectPermission.objects.assign_perm('delete_healingobject', request.user, ho)
-                    UserObjectPermission.objects.assign_perm('change_healingobject', request.user, ho)
-                    if usr:
-                        UserObjectPermission.objects.assign_perm('delete_healingobject', usr, ho)
-                        UserObjectPermission.objects.assign_perm('change_healingobject', usr, ho)
+            if obj.manager_user:
+                usr = User.objects.get(email=obj.manager_user)
+            else:
+                usr = None
+
+            LegalEntity.objects.assign_permissions(obj, request.user, usr)
         except:
             pass
 
@@ -350,22 +341,13 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
-        try:
-            UserObjectPermission.objects.assign_perm('change_healingobject', request.user, obj)
-        except:
-            pass
 
         try:
-            if len(obj.services.all()):
-                if obj.manager_user:
-                    usr = User.objects.get(email=obj.manager_user)
-                else:
-                    usr = None
-                for svc in obj.services.all():
-                    UserObjectPermission.objects.assign_perm('change_service', request.user, svc)
-                    UserObjectPermission.objects.assign_perm('delete_service', request.user, svc)
-                    if usr:
-                        UserObjectPermission.objects.assign_perm('delete_service', usr, svc)
-                        UserObjectPermission.objects.assign_perm('change_service', usr, svc)
+            if obj.manager_user:
+                usr = User.objects.get(email=obj.manager_user)
+            else:
+                usr = None
+
+            HealingObject.objects.assign_permissions(obj, request.user, usr)
         except:
             pass
