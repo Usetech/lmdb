@@ -80,10 +80,10 @@ msgstr "Реестр МУ"
 msgid "Object permissions"
 msgstr "Управление доступом"
 
-msgid "Users"
-msgstr "Пользователи"
-
 msgid "Auth"
+msgstr "Пользователи и группы"
+
+msgid "auth"
 msgstr "Пользователи и группы"
 
 msgid "sites"
