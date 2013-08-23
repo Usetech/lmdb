@@ -356,7 +356,7 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
             pass
 
         try:
-            if len(obj.healing_objects.all()):
+            if len(obj.services.all()):
                 if obj.manager_user:
                     usr = User.objects.get(email=obj.manager_user)
                 else:
