@@ -57,7 +57,8 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         user_obj_perms_queryset = (user_model.objects
                                    .filter(user=request.user)
                                    .filter(permission__content_type=ct)).values_list('object_pk', flat=True)
-        if request.user.has_perm('viewall_' + ct.model) and not len(user_obj_perms_queryset):
+        pname = '%s.viewall_%s' % (ct.app_label, ct.model)
+        if request.user.has_perm(pname) and not len(user_obj_perms_queryset):
             return qs
         #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
         return qs.filter(pk__in=map(int, user_obj_perms_queryset))
