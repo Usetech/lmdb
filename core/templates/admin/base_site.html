@@ -10,12 +10,10 @@
 {% block title %}Реестр медицинских учреждений{% endblock %}
 
 {% block breadcrumbs %}
-    123
-    FUCK YOU!!!
-{#    <ul>#}
-{#        <li>123 <a href="/">{% trans 'Home' %}</a></li>#}
-{#        {% if title %}#}
-{#            <li> &rsaquo; {{ title }}</li>#}
-{#        {% endif %}#}
-{#    </ul>#}
+    <ul>
+        <li><a href="/">{% trans 'Home' %}</a></li>
+        {% if title %}
+            <li> &rsaquo; {{ title }}</li>
+        {% endif %}
+    </ul>
 {% endblock %}
