@@ -70,8 +70,8 @@ class Migration(SchemaMigration):
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('bti_id', self.gf('django.db.models.fields.CharField')(max_length=16, unique=True, null=True, blank=True)),
             ('zip_code', self.gf('django.db.models.fields.CharField')(max_length=6)),
-            ('area', self.gf('django.db.models.fields.CharField')(max_length=128)),
-            ('district', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.DistrictObject'], null=True)),
+            ('area', self.gf('django.db.models.fields.CharField')(max_length=128, blank=True)),
+            ('district', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.DistrictObject'], null=True, blank=True)),
             ('city_type', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('city', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('street', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.StreetObject'])),
@@ -109,6 +109,7 @@ class Migration(SchemaMigration):
             ('info', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('errors', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('manager_user', self.gf('django.db.models.fields.EmailField')(max_length=75, null=True, blank=True)),
+            ('status', self.gf('django.db.models.fields.CharField')(default='OK', max_length=5, db_index=True)),
         ))
         db.send_create_signal(u'core', ['LegalEntity'])
 
@@ -159,7 +160,7 @@ class Migration(SchemaMigration):
             ('modified_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
             ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
             ('object_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name='healing_objects', to=orm['core.HealthObjectType'])),
-            ('legal_entity', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='healing_objects', null=True, to=orm['core.LegalEntity'])),
+            ('legal_entity', self.gf('django.db.models.fields.related.ForeignKey')(related_name='healing_objects', null=True, to=orm['core.LegalEntity'])),
             ('address', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.AddressObject'], null=True, blank=True)),
             ('original_address', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('full_name', self.gf('django.db.models.fields.CharField')(max_length=2048)),
@@ -170,6 +171,7 @@ class Migration(SchemaMigration):
             ('errors', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('parent', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='branches', null=True, to=orm['core.HealingObject'])),
             ('manager_user', self.gf('django.db.models.fields.EmailField')(max_length=75, null=True, blank=True)),
+            ('status', self.gf('django.db.models.fields.CharField')(default='OK', max_length=5, db_index=True)),
         ))
         db.send_create_signal(u'core', ['HealingObject'])
 
@@ -212,14 +214,14 @@ class Migration(SchemaMigration):
     models = {
         u'core.addressobject': {
             'Meta': {'object_name': 'AddressObject', 'index_together': "[['house', 'house_letter', 'housing', 'building', 'street']]"},
-            'area': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'area': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'True'}),
             'bti_id': ('django.db.models.fields.CharField', [], {'max_length': '16', 'unique': 'True', 'null': 'True', 'blank': 'True'}),
             'building': ('django.db.models.fields.CharField', [], {'max_length': '16', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'city_type': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'district': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.DistrictObject']", 'null': 'True'}),
+            'district': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.DistrictObject']", 'null': 'True', 'blank': 'True'}),
             'full_address_string': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '512', 'null': 'True', 'blank': 'True'}),
             'house': ('django.db.models.fields.CharField', [], {'max_length': '16', 'blank': 'True'}),
             'house_letter': ('django.db.models.fields.CharField', [], {'max_length': '16', 'blank': 'True'}),
@@ -247,14 +249,15 @@ class Migration(SchemaMigration):
             'global_id': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'info': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'legal_entity': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'healing_objects'", 'null': 'True', 'to': u"orm['core.LegalEntity']"}),
+            'legal_entity': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'healing_objects'", 'null': 'True', 'to': u"orm['core.LegalEntity']"}),
             'manager_user': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'null': 'True', 'blank': 'True'}),
             'modified_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '1024'}),
             'object_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'healing_objects'", 'to': u"orm['core.HealthObjectType']"}),
             'original_address': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'branches'", 'null': 'True', 'to': u"orm['core.HealingObject']"}),
-            'short_name': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'})
+            'short_name': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '5', 'db_index': 'True'})
         },
         u'core.healthobjecttype': {
             'Meta': {'object_name': 'HealthObjectType'},
@@ -286,7 +289,8 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '256'}),
             'ogrn_code': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
             'original_address': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'original_name': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'})
+            'original_name': ('django.db.models.fields.CharField', [], {'max_length': '256', 'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '5', 'db_index': 'True'})
         },
         u'core.position': {
             'Meta': {'object_name': 'Position'},
