@@ -194,7 +194,8 @@ class LegalEntity(ChiefModelMixin):
     class Meta:
         verbose_name = u"юридическое лицо"
         verbose_name_plural = u"юридические лица"
-        permissions = (('viewall_legalentity', u"Просматривать полный писок юрлиц"),)
+        permissions = (('viewall_legalentity', u"Просматривать полный писок юрлиц"),\
+                       ('view_legalentity', u"Просмотреть юрлицо"),)
 
 
 class Service(ChiefModelMixin):

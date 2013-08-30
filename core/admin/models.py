@@ -1,9 +1,10 @@
 # coding=utf-8
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from guardian.admin import GuardedModelAdmin
-from guardian.models import UserObjectPermission, User
+from guardian.models import User
 from guardian.utils import get_user_obj_perms_model
 from core.admin.base import LinkedInline
 from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter
@@ -63,6 +64,28 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
         return qs.filter(pk__in=map(int, user_obj_perms_queryset))
 
+    def get_model_perms(self, request, *args, **kwargs):
+        perms = admin.ModelAdmin.get_model_perms(self, request, *args, **kwargs)
+        ct = ContentType.objects.get_for_model(self.model)
+        perms['view'] = request.user.has_perm("%s.view_%s" % (ct.app_label, ct.model))
+        # Грязный хак над grapelli
+        perms['changeable'] = perms['change']
+        perms['change'] = perms['view']
+        # /Грязный хак над grapelli
+        return perms
+
+    # Костыли для django admin
+    def has_change_permission(self, request, obj=None):
+        opts = self.opts
+        return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission()) or \
+               request.user.has_perm(opts.app_label + '.view_' + opts.object_name.lower())
+
+    def save_form(self, request, form, change):
+        opts = self.opts
+        if (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())):
+            raise PermissionDenied
+        super(BaseGuardedModelAdmin, self).save_form(request, form, change)
+    # /Костыли для django admin
 
 class AddressObjectAdmin(BaseModelAdmin):
     model = AddressObject

@@ -28,10 +28,10 @@
                     {% for model in app.models %}
                         <div class="grp-row">
                             {% if model.perms.change %}<a href="{{ model.admin_url }}"><strong>{% trans model.name %}</strong></a>{% else %}<span><strong>{% trans model.name %}</strong></span>{% endif %}
-                            {% if model.perms.add or model.perms.change %}
+                            {% if model.perms.add or model.perms.changeable %}
                                 <ul class="grp-actions">
                                     {% if model.perms.add %}<li class="grp-add-link"><a href="{{ model.admin_url }}add/">{% trans 'Add' %}</a></li>{% endif %}
-                                    {% if model.perms.change %}<li class="grp-change-link"><a href="{{ model.admin_url }}">{% trans 'Change' %}</a></li>{% endif %}
+                                    {% if model.perms.changeable %}<li class="grp-change-link"><a href="{{ model.admin_url }}">{% trans 'Change' %}</a></li>{% endif %}
                                 </ul>
                             {% endif %}
                         </div>
