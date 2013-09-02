@@ -80,11 +80,11 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission()) or \
                request.user.has_perm(opts.app_label + '.view_' + opts.object_name.lower())
 
-    def save_form(self, request, form, change):
+    def save_form(self, request, form, change, *args, **kwargs):
         opts = self.opts
-        if (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())):
+        if (not request.user.is_superuser) and (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())):
             raise PermissionDenied
-        super(BaseGuardedModelAdmin, self).save_form(request, form, change)
+        return super(BaseGuardedModelAdmin, self).save_form(request, form, change)
     # /Костыли для django admin
 
 class AddressObjectAdmin(BaseModelAdmin):

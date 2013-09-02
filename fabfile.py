@@ -49,6 +49,7 @@ def migrate():
     with cd(prj['src']):
         with prefix('workon lmdb'):
             run("python manage.py migrate")
+            run("python manage.py syncdb --all")
 
 @task
 def deploy():
