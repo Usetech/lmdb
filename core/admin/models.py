@@ -75,7 +75,6 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         # /Грязный хак над grapelli
         return perms
 
-    # Костыли для django admin
     def has_change_permission(self, request, obj=None):
         opts = self.opts
         return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission()) or \
@@ -86,7 +85,6 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         if change and (not request.user.is_superuser) and (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)):
             raise PermissionDenied
         obj.save()
-    # /Костыли для django admin
 
     def get_readonly_fields(self, request, obj=None):
         opts = self.opts
@@ -95,6 +93,15 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
                 (not request.user.has_perm(opts.app_label + '.' + opts.get_add_permission(), obj)):
             return obj._meta.get_all_field_names()
         return self.readonly_fields
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        obj = self.model.objects.get(pk=object_id)
+        opts = self.opts or {}
+        if (not request.user.is_superuser) and\
+                (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)) and\
+                (not request.user.has_perm(opts.app_label + '.' + opts.get_add_permission(), obj)):
+            opts.readonly = True
+        return super(BaseGuardedModelAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
 class AddressObjectAdmin(BaseModelAdmin):
     model = AddressObject
