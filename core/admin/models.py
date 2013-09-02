@@ -5,6 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from guardian.admin import GuardedModelAdmin
 from guardian.models import User
+from guardian.shortcuts import get_perms
 from guardian.utils import get_user_obj_perms_model
 from core.admin.base import LinkedInline
 from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter
@@ -80,11 +81,11 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission()) or \
                request.user.has_perm(opts.app_label + '.view_' + opts.object_name.lower())
 
-    def save_form(self, request, form, change, *args, **kwargs):
+    def save_model(self, request, obj, form, change):
         opts = self.opts
-        if (not request.user.is_superuser) and (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission())):
+        if change and (not request.user.is_superuser) and (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)):
             raise PermissionDenied
-        return super(BaseGuardedModelAdmin, self).save_form(request, form, change)
+        obj.save()
     # /Костыли для django admin
 
 class AddressObjectAdmin(BaseModelAdmin):
@@ -211,7 +212,7 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
             'fact_address', 'fact_address__street')
 
     def save_model(self, request, obj, form, change):
-        obj.save()
+        super(LegalEntityAdmin, self).save_model(request, obj, form, change)
 
         try:
             if obj.manager_user:
@@ -222,7 +223,6 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
             LegalEntity.objects.assign_permissions(obj, request.user, usr)
         except:
             pass
-
 
     inlines = [HealingObjectInline]
 
