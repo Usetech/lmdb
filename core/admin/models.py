@@ -80,9 +80,14 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         return request.user.has_perm(opts.app_label + '.' + opts.get_change_permission()) or \
                request.user.has_perm(opts.app_label + '.view_' + opts.object_name.lower())
 
+    def can_save_own(self, request, obj):
+        return request.user.has_perm(self.opts.app_label + '.' + self.opts.get_change_permission(), obj)
+
+    def can_save(self, request, obj):
+        return self.can_save_own(request, obj)
+
     def save_model(self, request, obj, form, change):
-        opts = self.opts
-        if change and (not request.user.is_superuser) and (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)):
+        if change and (not request.user.is_superuser) and (not self.can_save(request, obj)):
             raise PermissionDenied
         obj.save()
 
@@ -94,14 +99,14 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
             return obj._meta.get_all_field_names()
         return self.readonly_fields
 
-    # def change_view(self, request, object_id, form_url='', extra_context=None):
-    #     obj = self.model.objects.get(pk=object_id)
-    #     opts = self.opts or {}
-    #     if (not request.user.is_superuser) and\
-    #             (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)) and\
-    #             (not request.user.has_perm(opts.app_label + '.' + opts.get_add_permission(), obj)):
-    #         opts.readonly = True
-    #     return super(BaseGuardedModelAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        obj = self.model.objects.get(pk=object_id)
+        opts = self.opts or {}
+        if (not request.user.is_superuser) and\
+                (not self.can_save(request, obj)):
+            opts.readonly = True
+        return super(BaseGuardedModelAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+
 
 class AddressObjectAdmin(BaseModelAdmin):
     model = AddressObject
@@ -226,18 +231,24 @@ class LegalEntityAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
             number_healingobjects=Count('healing_objects')).select_related(
             'fact_address', 'fact_address__street')
 
+    def can_save(self, request, obj):
+        ct = ContentType.objects.get_for_model(HealingObject)
+        return request.user.has_perm(self.opts.app_label + '.' + self.opts.get_change_permission(), obj) \
+            or request.user.has_perm("%s.change_%s" % (ct.app_label, ct.model))
+
     def save_model(self, request, obj, form, change):
         super(LegalEntityAdmin, self).save_model(request, obj, form, change)
 
-        try:
-            if obj.manager_user:
-                usr = User.objects.get(email=obj.manager_user)
-            else:
-                usr = None
+        if self.can_save_own(request, obj):
+            try:
+                if obj.manager_user:
+                    usr = User.objects.get(email=obj.manager_user)
+                else:
+                    usr = None
 
-            LegalEntity.objects.assign_permissions(obj, request.user, usr)
-        except:
-            pass
+                LegalEntity.objects.assign_permissions(obj, request.user, usr)
+            except:
+                pass
 
     inlines = [HealingObjectInline]
 
@@ -377,15 +388,21 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
 
     inlines = [HealingObjectServiceInline]
 
+    def can_save(self, request, obj):
+        ct = ContentType.objects.get_for_model(Service)
+        return request.user.has_perm(self.opts.app_label + '.' + self.opts.get_change_permission(), obj) \
+            or request.user.has_perm("%s.change_%s" % (ct.app_label, ct.model))
+
     def save_model(self, request, obj, form, change):
         obj.save()
 
-        try:
-            if obj.manager_user:
-                usr = User.objects.get(email=obj.manager_user)
-            else:
-                usr = None
+        if self.can_save_own(request, obj):
+            try:
+                if obj.manager_user:
+                    usr = User.objects.get(email=obj.manager_user)
+                else:
+                    usr = None
 
-            HealingObject.objects.assign_permissions(obj, request.user, usr)
-        except:
-            pass
+                HealingObject.objects.assign_permissions(obj, request.user, usr)
+            except:
+                pass
