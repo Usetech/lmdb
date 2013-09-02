@@ -93,9 +93,9 @@ def get_user_manager_form(model_type, permission, group_name, email_subject, ema
         def save(self, commit=True):
             e = super(ManagerUserForm, self).save(commit)
             # create user if not exists
-            email = self.cleaned_data['manager_user']
-            pwd = self.cleaned_data['user_password']
-            should_send_email = self.cleaned_data['send_email']
+            email = self.cleaned_data.get('manager_user')
+            pwd = self.cleaned_data.get('user_password')
+            should_send_email = self.cleaned_data.get('send_email')
             if email:
                 u = self._get_user()
                 if not u:
