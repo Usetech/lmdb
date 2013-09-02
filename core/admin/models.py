@@ -88,6 +88,14 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         obj.save()
     # /Костыли для django admin
 
+    def get_readonly_fields(self, request, obj=None):
+        opts = self.opts
+        if (not request.user.is_superuser) and\
+                (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)) and\
+                (not request.user.has_perm(opts.app_label + '.' + opts.get_add_permission(), obj)):
+            return obj._meta.get_all_field_names()
+        return self.readonly_fields
+
 class AddressObjectAdmin(BaseModelAdmin):
     model = AddressObject
     form = AddressObjectForm
