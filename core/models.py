@@ -6,7 +6,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 # Create your models here.
-from django.db.models import fields
+from django.db.models import fields, permalink
 from django.utils import timezone
 from core.managers import HealingObjectManager, LegalEntityManager, ServiceManager
 from core.validators import ogrn_validator, inn_validator
@@ -187,6 +187,10 @@ class LegalEntity(ChiefModelMixin):
     def __unicode__(self):
         return self.name
 
+    @permalink
+    def get_absolute_url(self):
+        return ('legal_entity', [self.id])
+
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
         return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
@@ -228,6 +232,10 @@ class Service(ChiefModelMixin):
 
     def __unicode__(self):
         return "%s" % self.service.name
+
+    def get_admin_url(self):
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
 
     class Meta:
         verbose_name = u"услуга"

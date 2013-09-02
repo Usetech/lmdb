@@ -1,0 +1,46 @@
+{% load static %}
+{% get_static_prefix as STATIC_URL %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Юридическое лицо</title>
+    <link rel="stylesheet" href="http://yandex.st/bootstrap/3.0.0/css/bootstrap.min.css" />
+    <script type="text/javascript" src="http://yandex.st/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+</head>
+<body style="padding:10px">
+    <div class="container">
+        <div class="well" style="padding:0 20px">
+            <div class="row">
+                <div class="col-md-12"><h2><a href="{{ object.get_admin_url }}" class="btn btn-default pull-right"><i class="glyphicon glyphicon-pencil"></i></a> {{ object.name }}</h2></div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <p>
+                        <dl>
+                          <dt>Фактический адрес:</dt><dd>{% firstof object.fact_address "" %}</dd>
+                          <dt>Юридический адрес:</dt><dd>{% firstof object.jur_address "" %}</dd>
+                          <dt>Руководитель:</dt><dd>{% firstof object.chief_position "" %} {{ object.chief_original_name }}</dd>
+                        </dl>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p>
+                        <dl>
+                          <dt>ОГРН:</dt><dd>{{ object.ogrn_code }}</dd>
+                          <dt>ИНН:</dt><dd>{{ object.inn_code }}</dd>
+                        </dl>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-11">
+                {% for object in healing_centers %}
+                    {% include "healing_center.html" %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

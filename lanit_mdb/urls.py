@@ -20,5 +20,6 @@ urlpatterns = patterns('',
     (r'^favicon.ico$', 'django.views.static.serve', {'path': 'favicon.ico', 'document_root': settings.STATIC_ROOT}),
     (r'^grappelli/', include('grappelli.urls')),
     (r'^selectable/', include('selectable.urls')),
+    url(r'^legalentity/(?P<id>\d+)/$', 'core.views.legal_entity', name='legal_entity'),
     url(r'', include(admin.site.urls)),
 )
