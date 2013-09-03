@@ -71,7 +71,7 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         perms['view'] = request.user.has_perm("%s.view_%s" % (ct.app_label, ct.model))
         # Грязный хак над grapelli
         perms['changeable'] = perms['change']
-        perms['change'] = perms['view']
+        perms['change'] = perms['view'] or perms['change']
         # /Грязный хак над grapelli
         return perms
 
