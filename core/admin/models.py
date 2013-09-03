@@ -93,11 +93,14 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         opts = self.opts
-        if (not request.user.is_superuser) and\
-                (not request.user.has_perm(opts.app_label + '.' + opts.get_change_permission(), obj)) and\
-                (not request.user.has_perm(opts.app_label + '.' + opts.get_add_permission(), obj)):
-            return obj._meta.get_all_field_names()
-        return self.readonly_fields
+        change_perm = opts.app_label + '.' + opts.get_change_permission()
+        add_perm = opts.app_label + '.' + opts.get_add_permission()
+        if request.user.is_superuser or \
+                request.user.has_perm(change_perm) or request.user.has_perm(add_perm) or\
+                request.user.has_perm(change_perm, obj) or request.user.has_perm(add_perm, obj):
+            return self.readonly_fields
+
+        return obj._meta.get_all_field_names()
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         obj = self.model.objects.get(pk=object_id)
