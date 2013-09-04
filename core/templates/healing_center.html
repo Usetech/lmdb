@@ -1,0 +1,32 @@
+<div class="well" style="padding:0 20px;">
+    <div class="row">
+        <div class="col-md-12"><h4><a href="{{ object.get_admin_url }}" class="btn btn-default pull-right"><i class="glyphicon glyphicon-pencil"></i></a> {{ object.name }} [{{ object.object_type }}]</h4></div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            {% firstof object.address "" %}
+        </div>
+    </div>
+    {% if object.services.all %}
+        {% for s in object.services.all %}
+            <table class="table table-bordered">
+                <tr>
+                    <td><a href="{{ s.get_admin_url }}">{{ s }}</a></td><td>{% firstof object.chief_position "" %} {{ object.chief_original_name }}</td><td>{{ s.phone }}</td><td>{{ s.fax }}</td>
+                </tr>
+            </table>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% if object.branches.all %}
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-11">
+            {% for obj in object.branches.all %}
+                {%with object=obj template_name="healing_center.html" %}
+                   {%include template_name%}
+                {%endwith%}
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
