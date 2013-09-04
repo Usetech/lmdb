@@ -264,9 +264,9 @@ class HealingObject(BaseModel):
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
 
     is_closed = fields.BooleanField(u"Признак закрытого ЛПУ", null=False, default=False)
-    closed_at = fields.DateTimeField(u"Дата закрытия", null=True, blank=True)
+    closed_at = fields.DateField(u"Дата закрытия", null=True, blank=True)
     closing_reason = fields.CharField(u"Причина закрытия", null=True, blank=True, max_length=1024)
-    opened_at = fields.DateTimeField(u"Дата повторного открытия после закрытия", null=True, blank=True)
+    reopened_at = fields.DateField(u"Дата повторного открытия после закрытия", null=True, blank=True)
 
     objects = HealingObjectManager()
 
