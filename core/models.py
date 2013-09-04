@@ -255,6 +255,11 @@ class HealingObject(BaseModel):
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
 
+    is_closed = fields.BooleanField(u"Признак закрытого ЛПУ", null=False, default=False)
+    closed_at = fields.DateTimeField(u"Дата закрытия", null=True, blank=True)
+    closing_reason = fields.CharField(u"Причина закрытия", null=True, blank=True, max_length=1024)
+    opened_at = fields.DateTimeField(u"Дата повторного открытия после закрытия", null=True, blank=True)
+
     objects = HealingObjectManager()
 
     def __unicode__(self):
