@@ -9,8 +9,8 @@ class FilterPersistMiddleware(object):
         if request.method == 'POST':
             return None
 
-        if 'HTTP_REFERER' in request.META:
-            referrer = request.META['HTTP_REFERER'].split('?')[0]
+        if 'HTTP_REFERRER' in request.META:
+            referrer = request.META['HTTP_REFERRER'].split('?')[0]
             referrer = referrer.lstrip("http://")
             referrer = referrer[referrer.find('/'):len(referrer)]
         else:
@@ -21,7 +21,7 @@ class FilterPersistMiddleware(object):
         query_string = request.META['QUERY_STRING']
         session = request.session
 
-        if session.get('redirected', False):#so that we dont loop once redirected
+        if session.get('redirected', False):  # so that we don't loop once redirected
             del session['redirected']
             return None
 
@@ -30,17 +30,17 @@ class FilterPersistMiddleware(object):
             key = 'popup'+key
 
         if path == referrer:
-            """ We are in the same page as before. We assume that filters were
-                changed and update them. """
-            if query_string == '': #Filter is empty, delete it
+            # We are in the same page as before. We assume that filters were
+            # changed and update them.
+            if query_string == '':  # Filter is empty, delete it
                 if key in session:
                     del session[key]
                 return None
             else:
                 request.session[key] = query_string
         else:
-            """ We are are coming from another page. Set querystring to
-                saved or default value. """
+            # We are are coming from another page. Set querystring to
+            # saved or default value.
             query_string = session.get(key)
             if query_string is not None:
                 redirect_to = path+'?'+query_string

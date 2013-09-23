@@ -6,22 +6,29 @@ from django.core.exceptions import ValidationError
 __author__ = 'pparkhomenko'
 
 __ogrn_regexp = re.compile(r"^([1-3,5]\d{11})(\d)$")
-__ogrn_error_message = u"ОГРН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Основной_государственный_регистрационный_номер"
+__ogrn_error_message = u"ОГРН не соответствует стандарту. " +\
+                       u"Подробнее на http://ru.wikipedia.org/wiki/Основной_государственный_регистрационный_номер"
+
 
 def ogrn_validator(value):
     result = __ogrn_regexp.match(value)
-    if (result != None):
+    if result is not None:
         number = int(result.group(1))
         expected = int(result.group(2))
         return __validate_checksum(number, expected, __ogrn_error_message)
-    raise ValidationError()
+    raise ValidationError(__ogrn_error_message)
 
 __jur_inn_coefficients = [2, 4, 10, 3, 5, 9, 4, 6, 8]
 __fiz_inn_coefficients1 = [7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
 __fiz_inn_coefficients2 = [3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]
-__inn_error_message = u"ИНН не соответствует стандарту. Подробнее на http://ru.wikipedia.org/wiki/Идентификационный_номер_налогоплательщика"
+__inn_error_message = u"ИНН не соответствует стандарту. " +\
+                      u"Подробнее на http://ru.wikipedia.org/wiki/Идентификационный_номер_налогоплательщика"
+
 
 def inn_validator(value):
+    """ Tries to calc correct INN
+    :param value: inn candidate string
+    """
     if not value.isdigit():
         raise ValidationError(__inn_error_message)
     if len(value) == 10:
@@ -51,8 +58,15 @@ def inn_validator(value):
             index += 1
     raise ValidationError(__inn_error_message)
 
+
 def __validate_checksum(checksum, expected, message):
-    checksum = checksum % 11
+    """ Validates checksum for expected value by using simple algo
+    :param checksum:
+    :param expected:
+    :param message:
+    :return: :raise:
+    """
+    checksum %= 11
     if checksum == 10:
         if expected == 0:
             return True

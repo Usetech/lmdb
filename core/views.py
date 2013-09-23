@@ -2,6 +2,7 @@
 from annoying.decorators import render_to
 from core.models import LegalEntity
 
+
 @render_to("legal_entity.html")
 def legal_entity(request, id):
     le = LegalEntity.objects.get(pk=id)

@@ -2,7 +2,7 @@
 import datetime
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
-from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 
 # Create your models here.
@@ -10,8 +10,6 @@ from django.db.models import fields, permalink
 from django.utils import timezone
 from core.managers import HealingObjectManager, LegalEntityManager, ServiceManager
 from core.validators import ogrn_validator, inn_validator
-
-phone_validator = RegexValidator(regex="\(\d{3}\) \d{3}-\d{2}-\d{2}", message=u"Телефон должен быть в формате (455) 123-45-67")
 
 
 class BaseModel(models.Model):
@@ -41,7 +39,14 @@ class NamedModel(BaseModel):
         abstract = True
 
 
-class HealthObjectType(NamedModel):
+class CodedModel(NamedModel):
+    code = fields.CharField(u'Код', max_length=16, unique=True)
+
+    class Meta:
+        abstract = True
+
+
+class HealthObjectType(CodedModel):
     """
     Типы объектов здравоохранения
     """
@@ -51,7 +56,7 @@ class HealthObjectType(NamedModel):
         verbose_name_plural = u"типы объектов здравоохранения"
 
 
-class Position(NamedModel):
+class Position(CodedModel):
     """
     Должности
     """
@@ -61,7 +66,7 @@ class Position(NamedModel):
         verbose_name_plural = u"должности"
 
 
-class ServiceType(NamedModel):
+class ServiceType(CodedModel):
     """
     Специальности
     """
@@ -87,6 +92,9 @@ class StreetObject(BaseModel):
 
 
 class DistrictObject(NamedModel):
+    """
+    Административная территориальная единица
+    """
     class Meta:
         verbose_name = u"административный округ"
         verbose_name_plural = u"административные округа"
@@ -101,7 +109,9 @@ status_choices = (
 
 
 class AddressObject(BaseModel):
-    bti_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=True, blank=True, unique=True)
+    """  Адресный объект """
+    bti_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=True, blank=True,
+                              unique=True)
     zip_code = fields.CharField(u"Индекс", max_length=6)
     area = fields.CharField(u"Область", max_length=128, blank=True)
     district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=True, blank=True)
@@ -112,7 +122,8 @@ class AddressObject(BaseModel):
     house_letter = fields.CharField(u"буква", max_length=16, null=False, blank=True)
     housing = fields.CharField(u"Корпус", max_length=16, null=False, blank=True)
     building = fields.CharField(u"Строение", max_length=16, null=False, blank=True)
-    full_address_string = fields.CharField(u"Полная адресная строка", max_length=512, null=True, blank=True, db_index=True)
+    full_address_string = fields.CharField(u"Полная адресная строка", max_length=512, null=True, blank=True,
+                                           db_index=True)
 
     def full_string(self):
         house = u""
@@ -126,12 +137,12 @@ class AddressObject(BaseModel):
         building = u""
         if self.building:
             building = u"стр. %s " % self.building.strip()
-        str = u"%s %s%s%s" % (self.street.iname, house, housing, building)
+        resStr = u"%s %s%s%s" % (self.street.iname, house, housing, building)
 
         if self.city:
-            str = self.city + "; " + str
+            resStr = self.city + "; " + resStr
 
-        return str.strip()
+        return resStr.strip()
 
     full_string.short_description = u"Полное наименование"
 
@@ -157,9 +168,8 @@ class ChiefModelMixin(BaseModel):
     chief_last_name = fields.CharField(u"Фамилия руководителя", max_length=256, blank=True, null=True)
     chief_sex = fields.CharField(u"Пол руководителя", max_length=1, choices=SEX_CHOICE, blank=True, null=True)
     chief_position = models.ForeignKey(Position, verbose_name=u"Должность руководителя", blank=True, null=True)
-    chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True
-    #    , validators=[phone_validator]
-    )
+    chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True)
+                                   # , validators=[validate_email]
 
     class Meta:
         abstract = True
@@ -174,8 +184,10 @@ class LegalEntity(ChiefModelMixin):
     ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
     inn_code = fields.CharField(u"ИНН", max_length=256, null=True, blank=True, validators=[inn_validator])
-    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, blank=True, related_name='registered_entities')
-    fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True, related_name='operating_entities')
+    jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, blank=True,
+                                    related_name='registered_entities')
+    fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True,
+                                     related_name='operating_entities')
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
@@ -189,16 +201,17 @@ class LegalEntity(ChiefModelMixin):
 
     @permalink
     def get_absolute_url(self):
-        return ('legal_entity', [self.id])
+        return 'legal_entity', [self.id]
 
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model),
+                                    args=(self.id,))
 
     class Meta:
         verbose_name = u"юридическое лицо"
         verbose_name_plural = u"юридические лица"
-        permissions = (('viewall_legalentity', u"Просматривать полный писок юрлиц"),\
+        permissions = (('viewall_legalentity', u"Просматривать полный писок юрлиц"),
                        ('view_legalentity', u"Просмотреть юрлицо"),)
 
 
@@ -235,7 +248,8 @@ class Service(ChiefModelMixin):
 
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model),
+                                    args=(self.id,))
 
     class Meta:
         verbose_name = u"услуга"
@@ -248,14 +262,19 @@ class HealingObject(BaseModel):
     Объект здравоохранения
     """
     object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
-    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects', null=True, blank=False)
+    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects',
+                                     null=True, blank=False)
     address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True, blank=True)
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     full_name = fields.CharField(u"Полное наименование", max_length=2048,
-                                 help_text=u"Например: Государственное казенное учреждение здравоохранения города Москвы «Десткая городская психоневрологическая больница № 32 Департамента здравоохранения города Москвы»")
-    name = fields.CharField(u"Наименование", max_length=1024, help_text=u"Например: ГКУЗ «Десткая городская психоневрологическая больница № 32»")
-    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"Например: ДГПНБ № 32", null=True, blank=True)
+                                 help_text=u"Например: Государственное казенное учреждение здравоохранения города "
+                                           + u"Москвы «Десткая городская психоневрологическая больница № 32 "
+                                           + u"Департамента здравоохранения города Москвы»")
+    name = fields.CharField(u"Наименование", max_length=1024,
+                            help_text=u"Например: ГКУЗ «Десткая городская психоневрологическая больница № 32»")
+    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"Например: ДГПНБ № 32",
+                                  null=True, blank=True)
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
@@ -275,11 +294,47 @@ class HealingObject(BaseModel):
 
     def get_admin_url(self):
         content_type = ContentType.objects.get_for_model(self.__class__)
-        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model), args=(self.id,))
+        return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model),
+                                    args=(self.id,))
+
+    def clean_fields(self, exclude=None):
+        """
+        Cleans all fields and raises a ValidationError containing message_dict
+        of all validation errors if any occur.
+        """
+        if exclude is None:
+            exclude = []
+
+        # try to call base (throws raise error)
+        super(BaseModel, self).clean_fields(exclude)
+
+        # if no default errors, try our business validation
+        if self.status == 'OK':
+            self.custom_validate(exclude)
+
+    def custom_validate(self, exclude):
+        """
+        Running custom harmonization validators
+        """
+        errors = {}
+        for f in self._meta.fields:
+            if f.name in exclude:
+                continue
+
+            # Skip validation for empty fields with blank=True. The developer
+            # is responsible for making sure they have a valid value.
+            if hasattr(f, 'custom_validators'):
+                h = f.custom_validators
+                if (self.object_type.name in h.object_type_names) or ('*' in h.object_type_names):
+                    try:
+                        for v in h.validators:
+                            v(self, getattr(self, f.attname))
+                    except ValidationError as e:
+                        errors[f.name] = e.messages
+        if errors:
+            raise ValidationError(errors)
 
     class Meta:
         verbose_name = u"объект здравоохранения"
         verbose_name_plural = u"объекты здравоохранения"
         permissions = (('viewall_healingobject', u"Просматривать полный писок МУ"),)
-
-
