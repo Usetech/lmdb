@@ -8,6 +8,7 @@ from django.db import models
 # Create your models here.
 from django.db.models import fields, permalink
 from django.utils import timezone
+from core.custom_validators import TypeCodedCustomValidator, hv_person_name, hv_object_name
 from core.managers import HealingObjectManager, LegalEntityManager, ServiceManager
 from core.validators import ogrn_validator, inn_validator
 
@@ -40,7 +41,7 @@ class NamedModel(BaseModel):
 
 
 class CodedModel(NamedModel):
-    code = fields.CharField(u'Код', max_length=16, unique=True)
+    code = fields.CharField(u'Код', max_length=16, unique=True, null=True)
 
     class Meta:
         abstract = True
@@ -93,12 +94,20 @@ class StreetObject(BaseModel):
 
 class DistrictObject(NamedModel):
     """
-    Административная территориальная единица
+    Район
+    """
+    class Meta:
+        verbose_name = u"район"
+        verbose_name_plural = u"районы"
+
+
+class AreaObject(NamedModel):
+    """
+    Административный округ
     """
     class Meta:
         verbose_name = u"административный округ"
         verbose_name_plural = u"административные округа"
-
 
 status_choices = (
     ('OK', u"Проверен"),
@@ -112,8 +121,9 @@ class AddressObject(BaseModel):
     """  Адресный объект """
     bti_id = fields.CharField(u"Уникальный идентификатор записи каталога", max_length=16, null=True, blank=True,
                               unique=True)
-    zip_code = fields.CharField(u"Индекс", max_length=6)
-    area = fields.CharField(u"Область", max_length=128, blank=True)
+    zip_code = fields.CharField(u"Почтовый индекс", max_length=6)
+    # area = fields.CharField(u"Административный округ", max_length=128, blank=True)
+    area = models.ForeignKey(AreaObject, verbose_name=u'Административный округ', null=True, blank=True)
     district = models.ForeignKey(DistrictObject, verbose_name=u"Район", null=True, blank=True)
     city_type = fields.CharField(u"Тип нас. пункта", max_length=128)
     city = fields.CharField(u"Нас. пункт", max_length=128)
@@ -267,25 +277,31 @@ class HealingObject(BaseModel):
     address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True, blank=True)
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
-    full_name = fields.CharField(u"Полное наименование", max_length=2048,
+    full_name = fields.CharField(u"Полное наименование", max_length=1250,
                                  help_text=u"Например: Государственное казенное учреждение здравоохранения города "
                                            + u"Москвы «Десткая городская психоневрологическая больница № 32 "
                                            + u"Департамента здравоохранения города Москвы»")
-    name = fields.CharField(u"Наименование", max_length=1024,
-                            help_text=u"Например: ГКУЗ «Десткая городская психоневрологическая больница № 32»")
-    short_name = fields.CharField(u"Краткое наименование", max_length=1024, help_text=u"Например: ДГПНБ № 32",
+    full_name.custom_validators = TypeCodedCustomValidator(object_type_codes=['*'], validators=[hv_object_name])
+
+    short_name = fields.CharField(u"Краткое наименование", max_length=120, help_text=u"Например: ДГПНБ № 32",
                                   null=True, blank=True)
+    short_name.custom_validators = TypeCodedCustomValidator(object_type_codes=['*'], validators=[hv_object_name])
+
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
-    info = models.TextField(u"Дополнительная информация", null=True, blank=True)
+    info = models.TextField(u"Дополнительная информация", null=True, blank=True, max_length=3000)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
-    parent = models.ForeignKey('self', related_name='branches', null=True, blank=True, verbose_name=u"Главное ЛПУ")
-    manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
-    status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
 
     is_closed = fields.BooleanField(u"Признак закрытого ЛПУ", null=False, default=False)
     closed_at = fields.DateField(u"Дата закрытия", null=True, blank=True)
     closing_reason = fields.CharField(u"Причина закрытия", null=True, blank=True, max_length=1024)
     reopened_at = fields.DateField(u"Дата повторного открытия после закрытия", null=True, blank=True)
+
+    # our model information
+    name = fields.CharField(u"Наименование", max_length=1024,
+                            help_text=u"Например: ГКУЗ «Десткая городская психоневрологическая больница № 32»")
+    parent = models.ForeignKey('self', related_name='branches', null=True, blank=True, verbose_name=u"Главное ЛПУ")
+    manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
+    status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
 
     objects = HealingObjectManager()
 
@@ -325,12 +341,10 @@ class HealingObject(BaseModel):
             # is responsible for making sure they have a valid value.
             if hasattr(f, 'custom_validators'):
                 h = f.custom_validators
-                if (self.object_type.name in h.object_type_names) or ('*' in h.object_type_names):
-                    try:
-                        for v in h.validators:
-                            v(self, getattr(self, f.attname))
-                    except ValidationError as e:
-                        errors[f.name] = e.messages
+                try:
+                    h.apply(self, getattr(self, f.attname))
+                except ValidationError as e:
+                    errors[f.name] = e.messages
         if errors:
             raise ValidationError(errors)
 
