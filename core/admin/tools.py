@@ -1,4 +1,6 @@
 # coding=utf-8
+from django.core.exceptions import ValidationError
+
 __author__ = 'sergio'
 
 
@@ -18,7 +20,18 @@ class StatusAdminMixin(object):
     get_status_name.allow_tags = True
 
     def mark_as_checked(self, request, queryset):
-        queryset.update(status='OK')
+        for entity in queryset:
+            try:
+                entity.status = 'OK'
+                entity.custom_validate(exclude={})
+                entity.save()
+            except ValidationError:
+                try:
+                    entity.status = 'E'
+                    entity.save()
+                except Exception:
+                    pass
+                pass
 
     mark_as_checked.short_description = u'Отметить как проверенные'
 
