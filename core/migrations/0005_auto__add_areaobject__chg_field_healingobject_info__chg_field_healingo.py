@@ -18,7 +18,6 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'core', ['AreaObject'])
 
-
         # Changing field 'HealingObject.info'
         db.alter_column(u'core_healingobject', 'info', self.gf('django.db.models.fields.TextField')(max_length=3000, null=True))
 
