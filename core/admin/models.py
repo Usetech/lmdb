@@ -9,9 +9,9 @@ from guardian.shortcuts import get_perms
 from guardian.utils import get_user_obj_perms_model
 from core.admin.base import LinkedInline
 from core.admin.filters import LegalEntityServiceTypeListFilter, HealingObjectServiceTypeListFilter
-from core.admin.forms import ServiceForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields, AddressObjectForm
+from core.admin.forms import ServiceForm, NamedModelForm, get_user_manager_form, user_manager_fieldset, user_manager_fields, AddressObjectForm, CodedModelForm
 from core.admin.tools import StatusAdminMixin
-from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType, StreetObject, DistrictObject, Service, HealingObject
+from core.models import LegalEntity, AddressObject, BaseModel, HealthObjectType, Position, ServiceType, StreetObject, DistrictObject, Service, HealingObject, ClosingReason
 
 __author__ = 'sergio'
 
@@ -62,7 +62,7 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         pname = '%s.viewall_%s' % (ct.app_label, ct.model)
         if request.user.has_perm(pname) and not len(user_obj_perms_queryset):
             return qs
-        #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
+            #if len(user_obj_perms_queryset): #если наложены ограничения - фильтруем
         return qs.filter(pk__in=map(int, user_obj_perms_queryset))
 
     def get_model_perms(self, request, *args, **kwargs):
@@ -96,7 +96,7 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
         change_perm = opts.app_label + '.' + opts.get_change_permission()
         add_perm = opts.app_label + '.' + opts.get_add_permission()
         if request.user.is_superuser or \
-                request.user.has_perm(change_perm) or request.user.has_perm(add_perm) or\
+                request.user.has_perm(change_perm) or request.user.has_perm(add_perm) or \
                 request.user.has_perm(change_perm, obj) or request.user.has_perm(add_perm, obj):
             return self.readonly_fields
 
@@ -105,7 +105,7 @@ class BaseGuardedModelAdmin(GuardedModelAdmin, BaseModelAdmin):
     def change_view(self, request, object_id, form_url='', extra_context=None):
         obj = self.model.objects.get(pk=object_id)
         opts = self.opts or {}
-        if (not request.user.is_superuser) and\
+        if (not request.user.is_superuser) and \
                 (not self.can_save(request, obj)):
             opts.readonly = True
         return super(BaseGuardedModelAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
@@ -175,15 +175,15 @@ class HealingObjectInline(LinkedInline):
                                  u"Реестр МУ: требуется актуализация информации по объекту здравоохранения",
                                  "email/welcome_healingobject.html")
     fields = (
-                 ('status',),
-                 ('object_type',),
-                 ('address', ),
-                 ('full_name',),
-                 ('name',),
-                 ('short_name',),
-                 ('global_id',),
-                 ('info', )
-             ) + user_manager_fields
+        ('status',),
+        ('object_type',),
+        ('address', ),
+        ('full_name',),
+        ('name',),
+        ('short_name',),
+        ('global_id',),
+        ('info', )
+    ) + user_manager_fields
 
     ordering = ('name',)
     extra = 0
@@ -270,12 +270,30 @@ class NamedModelAdmin(BaseModelAdmin):
     list_display = ("name", ) + BaseModelAdmin.list_display
 
 
+class CodedModelAdmin(BaseModelAdmin):
+    form = CodedModelForm
+    date_hierarchy = "modified_at"
+    search_fields = ("code", )
+    fieldsets = BaseModelAdmin.fieldsets + (
+        (
+            u"Основные параметры", {
+                'fields': ("name", "code",)
+            }
+        ),
+    )
+    list_display = ("name", "code", ) + NamedModelAdmin.list_display
+
+
 class HealthObjectTypeAdmin(NamedModelAdmin):
     model = HealthObjectType
 
 
 class PositionAdmin(NamedModelAdmin):
     model = Position
+
+
+class ClosingReasonAdmin(CodedModelAdmin):
+    model = ClosingReason
 
 
 class ServiceTypeAdmin(NamedModelAdmin):
@@ -370,7 +388,11 @@ class HealingObjectAdmin(BaseGuardedModelAdmin, StatusAdminMixin):
                     ('global_id',),
                     ('info', ),
                     ('errors', ),
-                    ('original_address', )
+                    ('original_address', ),
+                    ('is_closed', ),
+                    ('closed_at', ),
+                    ('closing_reason', ),
+                    ('reopened_at', ),
                 )
             }
         ),

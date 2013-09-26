@@ -51,6 +51,13 @@ class NamedModelForm(ModelForm):
         }
 
 
+class CodedModelForm(NamedModelForm):
+    class Meta:
+        widgets = {
+            'code': TextInput(attrs={'class': 'vLargeTextField'})
+        }
+
+
 class AddressObjectForm(ModelForm):
     class Meta:
         widgets = {

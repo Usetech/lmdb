@@ -23,7 +23,7 @@ class CustomIndexDashboard(Dashboard):
         site_name = get_admin_site_name(context)
 
         self.children.append(modules.Group(
-            _(u"Реестр медицинский учреждений"),
+            _(u"Реестр медицинских учреждений"),
             column=1,
             collapsible=False,
             css_classes=('grp-collapse',),
