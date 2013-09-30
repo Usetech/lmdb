@@ -149,9 +149,7 @@ class HealingObjectServiceInline(LinkedInline):
         ('chief_original_name',),
         ('chief_sex', 'chief_position',),
         ('info',),
-        ('workdays', 'workhours'),
-        ('daysoff', 'daysoff_restrictions'),
-
+        ('workhours'),
         ('specialization', ),
         ('paid_services', ),
         ('free_services',),
@@ -335,8 +333,7 @@ class ServiceAdmin(BaseGuardedModelAdmin):
                     ('fax',),
                     ('site_url',),
                     ('info',),
-                    ('workdays', 'workhours'),
-                    ('daysoff', 'daysoff_restrictions')
+                    ('workhours'),
                 )
             }
         ),

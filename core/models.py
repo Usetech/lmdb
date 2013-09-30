@@ -323,6 +323,7 @@ class Service(ChiefModelMixin):
         models.CharField(u"Часы работы", max_length=1024, blank=True, null=True),
         [CustomValidators(validators=[custom_work_hours])]
     )
+    workhours_clarification = models.CharField(u"Уточнение графика работы", max_length=3000, null=True, blank=True)
     specialization = models.TextField(u"Специализация", null=True, blank=True)
     paid_services = models.CharField(u"Платные услуги", max_length=3000, null=True, blank=True)
     free_services = models.CharField(u"Бесплатные услуги", max_length=3000, null=True, blank=True)

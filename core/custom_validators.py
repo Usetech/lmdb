@@ -87,8 +87,9 @@ def custom_not_null(obj, value):
 
 def create_phone_validator():
     phone_pattern = u"\(\d{3}\) \d{3}-\d{2}-\d{2}"
-    res = u"^(<PHONE>)|(<PHONE>;\s+<PHONE>)|(<PHONE>;\s+<PHONE>;\s+<PHONE>)$".replace(phone_pattern)
+    res = u"^(<PHONE>)|(<PHONE>;\s+<PHONE>)|(<PHONE>;\s+<PHONE>;\s+<PHONE>)$".replace(u"<PHONE>", phone_pattern)
     return res
+
 
 __phone_validator = RegexValidator(regex=create_phone_validator(),
                                    message=u"Телефон должен быть в формате (XXX) XXX-XX-XX")
@@ -101,11 +102,24 @@ def custom_phone_number(obj, value):
     __phone_validator(value)
 
 
+def create_email_validator():
+    email_pattern = ur"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*" + \
+                    ur'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*"' + \
+                    ur')@((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)$)' + \
+                    ur'|\[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\]$'
+    res = u"^(<MAIL>)|(<MAIL>;\s+<MAIL>)|(<MAIL>;\s+<MAIL>;\s+<MAIL>)$".replace(u"<MAIL>", email_pattern)
+    return res
+
+
+__email_validator = RegexValidator(regex=create_email_validator(), message=u"Некорректный email")
+
+
 def custom_email(value):
     """
     Checks for email
     """
-    return validate_email(value)
+
+    return __email_validator(value)
 
 
 __postal_code_validator = RegexValidator(regex="\^d{6}\$",
@@ -204,6 +218,7 @@ def create_hours_regex():
         .replace(u"<SPACE*>", u"\s*") \
         .replace(u"<TIME_PATTERN>", time_pattern)
     return regex
+
 
 __working_hours_validator = RegexValidator(
     regex=create_hours_regex(),
