@@ -35,6 +35,43 @@ class BaseModel(models.Model):
         self.modified_at = datetime.datetime.today()
         return super(BaseModel, self).save(*args, **kwargs)
 
+    def clean_fields(self, exclude=None):
+        """
+        Cleans all fields and raises a ValidationError containing message_dict
+        of all validation errors if any occur.
+        """
+        if exclude is None:
+            exclude = []
+
+        # try to call base (throws raise error)
+        super(BaseModel, self).clean_fields(exclude)
+
+        # if no default errors, try our business validation
+        # call it only in prod status, if so exists, or call anyway
+        if not hasattr(self, 'status') or (hasattr(self, 'status') and self.status == 'OK'):
+            self.custom_validate(exclude)
+
+    def custom_validate(self, exclude):
+        """
+        Running custom harmonization validators
+        """
+        errors = {}
+        for f in self._meta.fields:
+            if f.name in exclude:
+                continue
+
+            # Skip validation for empty fields with blank=True. The developer
+            # is responsible for making sure they have a valid value.
+            if hasattr(f, 'custom_validators'):
+                hs = f.custom_validators
+                try:
+                    for h in hs:
+                        h.apply(self, getattr(self, f.attname))
+                except ValidationError as e:
+                    errors[f.name] = e.messages
+        if errors:
+            raise ValidationError(errors)
+
 
 class NamedModel(BaseModel):
     """
@@ -83,6 +120,7 @@ class ClosingReason(CodedModel):
     """
     Причина закрытия
     """
+
     class Meta:
         verbose_name = u"причина закрытия"
         verbose_name_plural = u"причины закрытия"
@@ -96,6 +134,15 @@ class ServiceType(CodedModel):
     class Meta:
         verbose_name = u"тип услуги"
         verbose_name_plural = u"типы услуг"
+
+
+class SpecializationType(CodedModel):
+    """
+    Специализация
+    """
+    class Meta:
+        verbose_name = u"специализация"
+        verbose_name_plural = u"специализации"
 
 
 class StreetObject(BaseModel):
@@ -196,13 +243,30 @@ SEX_CHOICE = (
 
 class ChiefModelMixin(BaseModel):
     chief_original_name = fields.TextField(u"Ф.И.О. руководителя", blank=True, null=True)
-    chief_first_name = fields.CharField(u"Имя руководителя", max_length=256, blank=True, null=True)
-    chief_middle_name = fields.CharField(u"Отчество руководителя", max_length=256, blank=True, null=True)
-    chief_last_name = fields.CharField(u"Фамилия руководителя", max_length=256, blank=True, null=True)
-    chief_sex = fields.CharField(u"Пол руководителя", max_length=1, choices=SEX_CHOICE, blank=True, null=True)
-    chief_position = models.ForeignKey(Position, verbose_name=u"Должность руководителя", blank=True, null=True)
-    chief_phone = models.CharField(u"Телефон руководителя", max_length=128, null=True, blank=True)
-    # , validators=[validate_email]
+    chief_first_name = append_validators(
+        fields.CharField(u"Имя руководителя", max_length=2000, blank=True, null=True),
+        [CustomValidators([custom_not_null, custom_person_name, custom_max_len(128)])]
+    )
+    chief_middle_name = append_validators(
+        fields.CharField(u"Отчество руководителя", max_length=2000, blank=True, null=True),
+        [CustomValidators([custom_person_name, custom_max_len(128)])]
+    )
+    chief_last_name = append_validators(
+        fields.CharField(u"Фамилия руководителя", max_length=2000, blank=True, null=True),
+        [CustomValidators([custom_person_name, custom_max_len(128)])]
+    )
+    chief_sex = append_validators(
+        fields.CharField(u"Пол руководителя", max_length=2000, choices=SEX_CHOICE, blank=True, null=True),
+        [CustomValidators([custom_not_null, custom_max_len(1)])]
+    )
+    chief_position = append_validators(
+        models.ForeignKey(Position, verbose_name=u"Должность руководителя", blank=True, null=True),
+        [CustomValidators([custom_not_null])]
+    )
+    chief_phone = append_validators(
+        models.CharField(u"Телефон руководителя", max_length=2000, null=True, blank=True),
+        [CustomValidators([custom_phone_number])]
+    )
 
     class Meta:
         abstract = True
@@ -212,11 +276,11 @@ class LegalEntity(ChiefModelMixin):
     """
     Юридические лица
     """
-    name = fields.CharField(u"Наименование", max_length=256, help_text=u"Наименование юр. лица из устава", unique=True)
+    name = fields.CharField(u"Наименование", max_length=2000, help_text=u"Наименование юр. лица из устава", unique=True)
     original_name = fields.CharField(u"Наименование (исх.)", max_length=256, null=True, blank=True)
-    ogrn_code = fields.CharField(u"ОГРН", max_length=256, validators=[ogrn_validator], null=True, blank=True,
+    ogrn_code = fields.CharField(u"ОГРН", max_length=2000, validators=[ogrn_validator], null=True, blank=True,
                                  help_text=u"Основной государственный регистрационный номер")
-    inn_code = fields.CharField(u"ИНН", max_length=256, null=True, blank=True, validators=[inn_validator])
+    inn_code = fields.CharField(u"ИНН", max_length=2000, null=True, blank=True, validators=[inn_validator])
     jur_address = models.ForeignKey(AddressObject, verbose_name=u"Юридический адрес", null=True, blank=True,
                                     related_name='registered_entities')
     fact_address = models.ForeignKey(AddressObject, verbose_name=u"Фактический адрес", null=True, blank=True,
@@ -254,17 +318,26 @@ class Service(ChiefModelMixin):
     """
     healing_object = models.ForeignKey('HealingObject', verbose_name=u"Объект здравоохранения", related_name='services')
     service = models.ForeignKey(ServiceType, related_name='healing_objects', verbose_name=u"Услуга")
-    phone = models.CharField(u"Телефон", max_length=256, blank=True, null=True)
-    fax = models.CharField(u"Факс", max_length=256, null=True, blank=True)
+    phone = append_validators(
+        models.CharField(u"Телефон", max_length=256, blank=True, null=True),
+        [CustomValidators([custom_phone_number])]
+    )
+    fax = append_validators(
+        models.CharField(u"Факс", max_length=256, null=True, blank=True),
+        [CustomValidators([custom_phone_number])]
+    )
     site_url = models.URLField(u"Адрес сайта", max_length=1024, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     workdays = models.CharField(u"Рабочие дни", max_length=1024, blank=True, null=True)
-    workhours = models.CharField(u"Часы работы", max_length=1024, blank=True, null=True)
+    workhours = append_validators(
+        models.CharField(u"Часы работы", max_length=1024, blank=True, null=True),
+        [CustomValidators(validators=[custom_work_hours])]
+    )
     daysoff = models.CharField(u"Нерабочие дни", null=True, blank=True, max_length=1024)
     daysoff_restrictions = models.CharField(u"Ограничения выходных дней", null=True, blank=True, max_length=1024)
     specialization = models.TextField(u"Специализация", null=True, blank=True)
-    paid_services = models.CharField(u"Платные услуги", max_length=1024, null=True, blank=True)
-    free_services = models.TextField(u"Бесплатные услуги", null=True, blank=True)
+    paid_services = models.CharField(u"Платные услуги", max_length=3000, null=True, blank=True)
+    free_services = models.CharField(u"Бесплатные услуги", max_length=3000, null=True, blank=True)
     drug_provisioning = models.CharField(u"Лекарственное обеспечение", max_length=1024, null=True, blank=True)
     hospital_beds = models.CharField(u"Койкофонд", max_length=256, null=True, blank=True)
     departments = models.TextField(u"Перечень отделений", null=True, blank=True)
@@ -294,10 +367,33 @@ class HealingObject(BaseModel):
     """
     Объект здравоохранения
     """
-    object_type = models.ForeignKey(HealthObjectType, related_name='healing_objects', verbose_name=u"Тип")
-    legal_entity = models.ForeignKey(LegalEntity, verbose_name=u"Юридическое лицо", related_name='healing_objects',
-                                     null=True, blank=True)
-    address = models.ForeignKey(AddressObject, verbose_name=u"Адрес", null=True, blank=True)
+    object_type = append_validators(
+        models.ForeignKey(
+            HealthObjectType,
+            related_name='healing_objects',
+            verbose_name=u"Тип"
+        ),
+        [CustomValidators(custom_not_null)]
+    )
+    legal_entity = append_validators(
+        models.ForeignKey(
+            LegalEntity,
+            verbose_name=u"Юридическое лицо",
+            related_name='healing_objects',
+            null=True,
+            blank=True
+        ),
+        [CustomValidators([custom_not_null])]
+    )
+    address = append_validators(
+        models.ForeignKey(
+            AddressObject,
+            verbose_name=u"Адрес",
+            null=True,
+            blank=True
+        ),
+        [CustomValidators([custom_not_null])]
+    )
     original_address = models.TextField(u"Исходный адрес", null=True, blank=True)
 
     full_name = append_validators(
@@ -308,10 +404,17 @@ class HealingObject(BaseModel):
                       + u"Департамента здравоохранения города Москвы»",
             max_length=2000
         ),
-        [TypeCodeValidators(object_type_codes=['*'],
-                            validators=[custom_not_null,
-                                        custom_object_name,
-                                        custom_max_len(250)])]
+        [
+            TypeCodeValidators(object_type_codes=['HOSPIS'],
+                               validators=[custom_not_null,
+                                           custom_object_name,
+                                           custom_max_len(250)]),
+            TypeCodeValidators(object_type_codes=['*'],
+                               exclude_type_codes=['HOSPIS'],
+                               validators=[custom_not_null,
+                                           custom_object_name,
+                                           custom_max_len(500)])
+        ]
     )
 
     short_name = append_validators(
@@ -322,10 +425,7 @@ class HealingObject(BaseModel):
             blank=True,
             max_length=2000
         ),
-        [TypeCodeValidators(object_type_codes=['*'],
-                            validators=[custom_not_null,
-                                        custom_object_name,
-                                        custom_max_len(250)])]
+        [CustomValidators([custom_not_null, custom_object_name, custom_max_len(250)])]
     )
 
     global_id = fields.CharField(u"Глобальный идентификатор", max_length=128, null=True, blank=True)
@@ -344,8 +444,7 @@ class HealingObject(BaseModel):
             null=True,
             blank=True,
         ),
-        [TypeCodeValidators(object_type_codes=['*'],
-                            validators=[custom_not_null_only_when_true('is_closed')])]
+        [CustomValidators([custom_not_null_only_when_true('is_closed')])]
     )
 
     closing_reason = append_validators(
@@ -356,8 +455,7 @@ class HealingObject(BaseModel):
             null=True,
             blank=True
         ),
-        [TypeCodeValidators(object_type_codes=['*'],
-                            validators=[custom_not_null_only_when_true('is_closed')])]
+        [CustomValidators([custom_not_null_only_when_true('is_closed')])]
     )
 
     reopened_at = append_validators(
@@ -366,9 +464,7 @@ class HealingObject(BaseModel):
             null=True,
             blank=True
         ),
-        [TypeCodeValidators(object_type_codes=['*'],
-                            validators=[custom_null_if_false('is_closed'),
-                                        greater_than('closed_at')])]
+        [CustomValidators([custom_null_if_false('is_closed'), greater_than('closed_at')])]
     )
 
     name = fields.CharField(u"Наименование", max_length=1024)
@@ -380,11 +476,19 @@ class HealingObject(BaseModel):
             blank=True,
             verbose_name=u"Главное ЛПУ"
         ),
-        [TypeCodeValidators(object_type_codes=['*'],
-                            validators=[custom_not_null])]
+        [CustomValidators([custom_not_null])]
     )
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
+    specialization = append_validators(
+        models.ForeignKey(
+            SpecializationType,
+            related_name='specialization',
+            verbose_name=u"Специализация",
+            null=True,
+            blank=True),
+        [CustomValidators([custom_not_null])]
+    )
 
     objects = HealingObjectManager()
 
@@ -395,42 +499,6 @@ class HealingObject(BaseModel):
         content_type = ContentType.objects.get_for_model(self.__class__)
         return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model),
                                     args=(self.id,))
-
-    def clean_fields(self, exclude=None):
-        """
-        Cleans all fields and raises a ValidationError containing message_dict
-        of all validation errors if any occur.
-        """
-        if exclude is None:
-            exclude = []
-
-        # try to call base (throws raise error)
-        super(BaseModel, self).clean_fields(exclude)
-
-        # if no default errors, try our business validation
-        if self.status == 'OK':
-            self.custom_validate(exclude)
-
-    def custom_validate(self, exclude):
-        """
-        Running custom harmonization validators
-        """
-        errors = {}
-        for f in self._meta.fields:
-            if f.name in exclude:
-                continue
-
-            # Skip validation for empty fields with blank=True. The developer
-            # is responsible for making sure they have a valid value.
-            if hasattr(f, 'custom_validators'):
-                hs = f.custom_validators
-                try:
-                    for h in hs:
-                        h.apply(self, getattr(self, f.attname))
-                except ValidationError as e:
-                    errors[f.name] = e.messages
-        if errors:
-            raise ValidationError(errors)
 
     class Meta:
         verbose_name = u"объект здравоохранения"
