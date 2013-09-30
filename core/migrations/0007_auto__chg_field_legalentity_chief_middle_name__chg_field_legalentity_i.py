@@ -8,22 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'SpecializationType'
-        db.create_table(u'core_specializationtype', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
-            ('modified_at', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
-            ('deleted_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=128)),
-            ('code', self.gf('django.db.models.fields.CharField')(max_length=16, unique=True, null=True)),
-        ))
-        db.send_create_signal(u'core', ['SpecializationType'])
-
-        # Adding field 'HealingObject.specialization'
-        db.add_column(u'core_healingobject', 'specialization',
-                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='specialization', null=True, to=orm['core.SpecializationType']),
-                      keep_default=False)
-
 
         # Changing field 'LegalEntity.chief_middle_name'
         db.alter_column(u'core_legalentity', 'chief_middle_name', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
@@ -48,6 +32,15 @@ class Migration(SchemaMigration):
 
         # Changing field 'LegalEntity.ogrn_code'
         db.alter_column(u'core_legalentity', 'ogrn_code', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
+        # Deleting field 'Service.workdays'
+        db.delete_column(u'core_service', 'workdays')
+
+        # Deleting field 'Service.daysoff'
+        db.delete_column(u'core_service', 'daysoff')
+
+        # Deleting field 'Service.daysoff_restrictions'
+        db.delete_column(u'core_service', 'daysoff_restrictions')
+
 
         # Changing field 'Service.chief_middle_name'
         db.alter_column(u'core_service', 'chief_middle_name', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
@@ -58,25 +51,19 @@ class Migration(SchemaMigration):
         # Changing field 'Service.chief_last_name'
         db.alter_column(u'core_service', 'chief_last_name', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
 
-        # Changing field 'Service.paid_services'
-        db.alter_column(u'core_service', 'paid_services', self.gf('django.db.models.fields.CharField')(max_length=3000, null=True))
-
         # Changing field 'Service.chief_phone'
         db.alter_column(u'core_service', 'chief_phone', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
-
-        # Changing field 'Service.chief_first_name'
-        db.alter_column(u'core_service', 'chief_first_name', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
 
         # Changing field 'Service.free_services'
         db.alter_column(u'core_service', 'free_services', self.gf('django.db.models.fields.CharField')(max_length=3000, null=True))
 
+        # Changing field 'Service.chief_first_name'
+        db.alter_column(u'core_service', 'chief_first_name', self.gf('django.db.models.fields.CharField')(max_length=2000, null=True))
+
+        # Changing field 'Service.paid_services'
+        db.alter_column(u'core_service', 'paid_services', self.gf('django.db.models.fields.CharField')(max_length=3000, null=True))
+
     def backwards(self, orm):
-        # Deleting model 'SpecializationType'
-        db.delete_table(u'core_specializationtype')
-
-        # Deleting field 'HealingObject.specialization'
-        db.delete_column(u'core_healingobject', 'specialization_id')
-
 
         # Changing field 'LegalEntity.chief_middle_name'
         db.alter_column(u'core_legalentity', 'chief_middle_name', self.gf('django.db.models.fields.CharField')(max_length=256, null=True))
@@ -101,6 +88,21 @@ class Migration(SchemaMigration):
 
         # Changing field 'LegalEntity.ogrn_code'
         db.alter_column(u'core_legalentity', 'ogrn_code', self.gf('django.db.models.fields.CharField')(max_length=256, null=True))
+        # Adding field 'Service.workdays'
+        db.add_column(u'core_service', 'workdays',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Service.daysoff'
+        db.add_column(u'core_service', 'daysoff',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Service.daysoff_restrictions'
+        db.add_column(u'core_service', 'daysoff_restrictions',
+                      self.gf('django.db.models.fields.CharField')(max_length=1024, null=True, blank=True),
+                      keep_default=False)
+
 
         # Changing field 'Service.chief_middle_name'
         db.alter_column(u'core_service', 'chief_middle_name', self.gf('django.db.models.fields.CharField')(max_length=256, null=True))
@@ -111,17 +113,17 @@ class Migration(SchemaMigration):
         # Changing field 'Service.chief_last_name'
         db.alter_column(u'core_service', 'chief_last_name', self.gf('django.db.models.fields.CharField')(max_length=256, null=True))
 
-        # Changing field 'Service.paid_services'
-        db.alter_column(u'core_service', 'paid_services', self.gf('django.db.models.fields.CharField')(max_length=1024, null=True))
-
         # Changing field 'Service.chief_phone'
         db.alter_column(u'core_service', 'chief_phone', self.gf('django.db.models.fields.CharField')(max_length=128, null=True))
+
+        # Changing field 'Service.free_services'
+        db.alter_column(u'core_service', 'free_services', self.gf('django.db.models.fields.TextField')(null=True))
 
         # Changing field 'Service.chief_first_name'
         db.alter_column(u'core_service', 'chief_first_name', self.gf('django.db.models.fields.CharField')(max_length=256, null=True))
 
-        # Changing field 'Service.free_services'
-        db.alter_column(u'core_service', 'free_services', self.gf('django.db.models.fields.TextField')(null=True))
+        # Changing field 'Service.paid_services'
+        db.alter_column(u'core_service', 'paid_services', self.gf('django.db.models.fields.CharField')(max_length=1024, null=True))
 
     models = {
         u'core.addressobject': {
@@ -190,7 +192,6 @@ class Migration(SchemaMigration):
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'branches'", 'null': 'True', 'to': u"orm['core.HealingObject']"}),
             'reopened_at': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
             'short_name': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True', 'blank': 'True'}),
-            'specialization': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'specialization'", 'null': 'True', 'to': u"orm['core.SpecializationType']"}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'OK'", 'max_length': '5', 'db_index': 'True'})
         },
         u'core.healthobjecttype': {
@@ -246,8 +247,6 @@ class Migration(SchemaMigration):
             'chief_position': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.Position']", 'null': 'True', 'blank': 'True'}),
             'chief_sex': ('django.db.models.fields.CharField', [], {'max_length': '2000', 'null': 'True', 'blank': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'daysoff': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
-            'daysoff_restrictions': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'departments': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'drug_provisioning': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
@@ -268,20 +267,10 @@ class Migration(SchemaMigration):
             'site_url': ('django.db.models.fields.URLField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'specialization': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'tour': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
-            'workdays': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'workhours': ('django.db.models.fields.CharField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'})
         },
         u'core.servicetype': {
             'Meta': {'object_name': 'ServiceType'},
-            'code': ('django.db.models.fields.CharField', [], {'max_length': '16', 'unique': 'True', 'null': 'True'}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'modified_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '128'})
-        },
-        u'core.specializationtype': {
-            'Meta': {'object_name': 'SpecializationType'},
             'code': ('django.db.models.fields.CharField', [], {'max_length': '16', 'unique': 'True', 'null': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'deleted_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),

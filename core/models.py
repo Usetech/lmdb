@@ -136,15 +136,6 @@ class ServiceType(CodedModel):
         verbose_name_plural = u"типы услуг"
 
 
-class SpecializationType(CodedModel):
-    """
-    Специализация
-    """
-    class Meta:
-        verbose_name = u"специализация"
-        verbose_name_plural = u"специализации"
-
-
 class StreetObject(BaseModel):
     bti_id = fields.CharField(u"Уникальный код улицы", max_length=16, null=True, blank=True, unique=True)
     name = fields.CharField(u"Наименование", max_length=128)
@@ -328,13 +319,10 @@ class Service(ChiefModelMixin):
     )
     site_url = models.URLField(u"Адрес сайта", max_length=1024, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
-    workdays = models.CharField(u"Рабочие дни", max_length=1024, blank=True, null=True)
     workhours = append_validators(
         models.CharField(u"Часы работы", max_length=1024, blank=True, null=True),
         [CustomValidators(validators=[custom_work_hours])]
     )
-    daysoff = models.CharField(u"Нерабочие дни", null=True, blank=True, max_length=1024)
-    daysoff_restrictions = models.CharField(u"Ограничения выходных дней", null=True, blank=True, max_length=1024)
     specialization = models.TextField(u"Специализация", null=True, blank=True)
     paid_services = models.CharField(u"Платные услуги", max_length=3000, null=True, blank=True)
     free_services = models.CharField(u"Бесплатные услуги", max_length=3000, null=True, blank=True)
@@ -480,15 +468,6 @@ class HealingObject(BaseModel):
     )
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
-    specialization = append_validators(
-        models.ForeignKey(
-            SpecializationType,
-            related_name='specialization',
-            verbose_name=u"Специализация",
-            null=True,
-            blank=True),
-        [CustomValidators([custom_not_null])]
-    )
 
     objects = HealingObjectManager()
 
