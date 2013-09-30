@@ -29,8 +29,8 @@ class TypeCodeValidators(CustomValidators):
         self.exclude_type_codes = exclude_type_codes
 
     def apply(self, obj, value):
-        if '*' in self.object_type_codes or obj.object_type.code in self.object_type_codes:
-            if obj.object_type.code not in self.exclude_type_codes:
+        if '*' in self.object_type_codes or obj.get_code() in self.object_type_codes:
+            if obj.get_code() not in self.exclude_type_codes:
                 for v in self.validators:
                     v(obj, value)
 

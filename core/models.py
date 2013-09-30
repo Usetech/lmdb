@@ -345,6 +345,9 @@ class Service(ChiefModelMixin):
         return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model),
                                     args=(self.id,))
 
+    def get_code(self):
+        return self.service.code
+
     class Meta:
         verbose_name = u"услуга"
         verbose_name_plural = u"услуги"
@@ -478,6 +481,9 @@ class HealingObject(BaseModel):
         content_type = ContentType.objects.get_for_model(self.__class__)
         return urlresolvers.reverse("admin:%s_%s_change" % (content_type.app_label, content_type.model),
                                     args=(self.id,))
+
+    def get_code(self):
+        return self.object_type.code
 
     class Meta:
         verbose_name = u"объект здравоохранения"
