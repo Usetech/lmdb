@@ -85,7 +85,12 @@ def custom_not_null(obj, value):
         raise __generate_error_empty()
 
 
-__phone_validator = RegexValidator(regex="^\(\d{3}\) \d{3}-\d{2}-\d{2}$",
+def create_phone_validator():
+    phone_pattern = u"\(\d{3}\) \d{3}-\d{2}-\d{2}"
+    res = u"^(<PHONE>)|(<PHONE>;\s+<PHONE>)|(<PHONE>;\s+<PHONE>;\s+<PHONE>)$".replace(phone_pattern)
+    return res
+
+__phone_validator = RegexValidator(regex=create_phone_validator(),
                                    message=u"Телефон должен быть в формате (XXX) XXX-XX-XX")
 
 
@@ -185,7 +190,7 @@ def greater_than(attr_name):
 
 
 def create_hours_regex():
-    template = u"<DAY>\:\s+<TIME_PATTERN>"
+    template = u"<DAY>\: <TIME_PATTERN>"
     regex = u"^"
     for day in [u"понедельник", u"вторник", u"среда", u"четверг", u"пятница", u"суббота", u"воскресенье"]:
         regex += template.replace(u"<DAY>", day)
