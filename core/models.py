@@ -311,11 +311,11 @@ class Service(ChiefModelMixin):
     service = models.ForeignKey(ServiceType, related_name='healing_objects', verbose_name=u"Услуга")
     phone = append_validators(
         models.CharField(u"Телефон", max_length=256, blank=True, null=True),
-        [CustomValidators([custom_phone_number])]
+        [CustomValidators([custom_phone_number, custom_not_null])]
     )
     fax = append_validators(
         models.CharField(u"Факс", max_length=256, null=True, blank=True),
-        [CustomValidators([custom_phone_number])]
+        [CustomValidators([custom_phone_number, custom_not_null])]
     )
     site_url = models.URLField(u"Адрес сайта", max_length=1024, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)

@@ -91,14 +91,17 @@ def create_phone_validator():
     return res
 
 
-__phone_validator = RegexValidator(regex=create_phone_validator(),
-                                   message=u"Телефон должен быть в формате (XXX) XXX-XX-XX")
+__phone_validator = RegexValidator(
+    regex=create_phone_validator(),
+    message=u"Телефон должен быть в формате (XXX) XXX-XX-XX, или их перечень через символ \";\"")
 
 
 def custom_phone_number(obj, value):
     """
     Checks for phone number
     """
+    if value is None:
+        return
     __phone_validator(value)
 
 
@@ -231,7 +234,9 @@ def custom_work_hours(obj, value):
     """
     __working_hours_validator(value)
 
-__list_of_values = RegexValidator(regex=u"^[^;]+$|^[^;]+(\s*;\s*[^;]+)+$", message=u"Не удаётся разобрать значение")
+__list_of_values = RegexValidator(
+    regex=u"^[^;]+$|^[^;]+(\s*;\s*[^;]+)+$",
+    message=u"Не удаётся разобрать значение; требуется перечень через символ \";\"")
 
 
 def custom_list_of_values(obj, value):
