@@ -324,12 +324,18 @@ class Service(ChiefModelMixin):
         [CustomValidators(validators=[custom_work_hours])]
     )
     workhours_clarification = models.CharField(u"Уточнение графика работы", max_length=3000, null=True, blank=True)
-    specialization = models.TextField(u"Специализация", null=True, blank=True)
+    specialization = append_validators(
+        models.TextField(u"Специализация", null=True, blank=True),
+        [TypeCodeValidators(validators=[custom_not_null], object_type_codes=['HOSP'])]
+    )
     paid_services = models.CharField(u"Платные услуги", max_length=3000, null=True, blank=True)
     free_services = models.CharField(u"Бесплатные услуги", max_length=3000, null=True, blank=True)
     drug_provisioning = models.CharField(u"Лекарственное обеспечение", max_length=1024, null=True, blank=True)
     hospital_beds = models.CharField(u"Койкофонд", max_length=256, null=True, blank=True)
-    departments = models.TextField(u"Перечень отделений", null=True, blank=True)
+    departments = append_validators(
+        models.TextField(u"Перечень отделений", null=True, blank=True),
+        [CustomValidators([custom_list_of_values])]
+    )
     hospital_levels = models.CharField(u"Уровень стационара", max_length=1024, null=True, blank=True)
     tour = models.CharField(u"Смена", max_length=1024, null=True, blank=True)
     receipes_provisioning = models.CharField(u"Обеспечение рецептов", max_length=1024, null=True, blank=True)
@@ -348,7 +354,7 @@ class Service(ChiefModelMixin):
                                     args=(self.id,))
 
     def get_code(self):
-        return self.service.code
+        return self.healing_object.get_code()
 
     class Meta:
         verbose_name = u"услуга"

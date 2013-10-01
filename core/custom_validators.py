@@ -230,3 +230,9 @@ def custom_work_hours(obj, value):
     Format: "понедельник: 00:00-08:00; вторник: ...."
     """
     __working_hours_validator(value)
+
+__list_of_values = RegexValidator(regex=u"^[^;]+$|^[^;]+(\s*;\s*[^;]+)+$", message=u"Не удаётся разобрать значение")
+
+
+def custom_list_of_values(obj, value):
+    return __list_of_values(value)
