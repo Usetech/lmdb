@@ -86,8 +86,8 @@ def custom_not_null(obj, value):
 
 
 def create_phone_validator():
-    phone_pattern = u"\(\d{3}\) \d{3}-\d{2}-\d{2}"
-    res = u"^(<PHONE>)|(<PHONE>;\s+<PHONE>)|(<PHONE>;\s+<PHONE>;\s+<PHONE>)$".replace(u"<PHONE>", phone_pattern)
+    phone_pattern = "\(\d{3}\) \d{3}-\d{2}-\d{2}"
+    res = "^((<PHONE>)|(<PHONE>;\s+<PHONE>)|(<PHONE>;\s+<PHONE>;\s+<PHONE>))$".replace("<PHONE>", phone_pattern)
     return res
 
 

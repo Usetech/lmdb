@@ -280,7 +280,7 @@ class LegalEntity(ChiefModelMixin):
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     errors = models.TextField(u"Ошибки импорта", null=True, blank=True)
     manager_user = models.EmailField(u"E-mail (логин)", null=True, blank=True)
-    status = models.CharField(u"Статус", max_length=5, db_index=True, default='OK', choices=status_choices)
+    status = models.CharField(u"Статус", max_length=5, db_index=True, default='А', choices=status_choices)
 
     objects = LegalEntityManager()
 
@@ -335,6 +335,7 @@ class Service(ChiefModelMixin):
     receipes_provisioning = models.CharField(u"Обеспечение рецептов", max_length=1024, null=True, blank=True)
     drugstore_type = models.CharField(u"Тип аптеки", max_length=256, null=True, blank=True)
     hospital_type = models.CharField(u"Тип стационара", max_length=256, null=True, blank=True)
+    status = models.CharField(u"Статус", max_length=5, db_index=True, default='А', choices=status_choices)
 
     objects = ServiceManager()
 

@@ -327,6 +327,7 @@ class ServiceAdmin(BaseGuardedModelAdmin):
             u"Основные параметры",
             {
                 'fields': (
+                    ('status',),
                     ('healing_object',),
                     ('service',),
                     ('phone',),
