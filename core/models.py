@@ -303,6 +303,22 @@ class LegalEntity(ChiefModelMixin):
                        ('view_legalentity', u"Просмотреть юрлицо"),)
 
 
+class Specialization(CodedModel):
+    pass
+
+
+class MaternitySpecialization(Specialization):
+    pass
+
+
+class DispSpecialization(Specialization):
+    pass
+
+
+class StatSpecialization(Specialization):
+    pass
+
+
 class Service(ChiefModelMixin):
     """
     Услуги
@@ -315,26 +331,63 @@ class Service(ChiefModelMixin):
     )
     fax = append_validators(
         models.CharField(u"Факс", max_length=256, null=True, blank=True),
-        [CustomValidators([custom_phone_number, custom_not_null])]
+        [CustomValidators([custom_phone_number])]
     )
     site_url = models.URLField(u"Адрес сайта", max_length=1024, null=True, blank=True)
     info = models.TextField(u"Дополнительная информация", null=True, blank=True)
     workhours = append_validators(
         models.CharField(u"Часы работы", max_length=1024, blank=True, null=True),
-        [CustomValidators(validators=[custom_work_hours])]
+        [CustomValidators(validators=[custom_not_null, custom_work_hours])]
     )
     workhours_clarification = models.CharField(u"Уточнение графика работы", max_length=3000, null=True, blank=True)
     specialization = append_validators(
         models.TextField(u"Специализация", null=True, blank=True),
-        [TypeCodeValidators(validators=[custom_not_null], object_type_codes=['HOSP'])]
+        [TypeCodeValidators(validators=[custom_not_null],
+                            object_type_codes=['HOSPITAL', 'HOSPITAL_CH', 'SCIENCE', 'MATERNITY', 'SANITARY',
+                                               'STATIONARY']),
+         TypeCodeValidators(validators=[custom_null],
+                            object_type_codes=['*'],
+                            exclude_type_codes=['HOSPITAL', 'HOSPITAL_CH', 'SCIENCE', 'MATERNITY', 'SANITARY',
+                                                'STATIONARY'])
+         ]
     )
-    paid_services = models.CharField(u"Платные услуги", max_length=3000, null=True, blank=True)
-    free_services = models.CharField(u"Бесплатные услуги", max_length=3000, null=True, blank=True)
+    mat_specialization = models.ForeignKey(MaternitySpecialization, verbose_name=u"Специализация родильных домов",
+                                           related_name='mat_specialization', null=True, blank=True)
+    disp_specialization = models.ForeignKey(DispSpecialization, verbose_name=u"Специализация диспансеров",
+                                            related_name='disp_specialization', null=True, blank=True)
+    stat_specialization = models.ForeignKey(StatSpecialization, verbose_name=u"Специализация стационаров",
+                                            related_name='stat_specialization', null=True, blank=True)
+
+    paid_services = append_validators(
+        models.CharField(u"Платные услуги", max_length=3000, null=True, blank=True),
+        [TypeCodeValidators(validators=[custom_not_null],
+                            object_type_codes=['HOSPITAL_CH', 'SCIENCE', 'MATERNITY', 'HOSPITAL']),
+         TypeCodeValidators(validators=[custom_null], object_type_codes=['*'],
+                            exclude_type_codes=['HOSPITAL_CH', 'SCIENCE', 'MATERNITY', 'HOSPITAL'])
+         ]
+    )
+    free_services = append_validators(
+        models.CharField(u"Бесплатные услуги", max_length=3000, null=True, blank=True),
+        [TypeCodeValidators(validators=[custom_not_null],
+                            object_type_codes=['HOSPITAL_CH', 'SCIENCE', 'MATERNITY', 'HOSPITAL']),
+         TypeCodeValidators(validators=[custom_null], object_type_codes=['*'],
+                            exclude_type_codes=['HOSPITAL_CH', 'SCIENCE', 'MATERNITY', 'HOSPITAL'])
+         ]
+    )
     drug_provisioning = models.CharField(u"Лекарственное обеспечение", max_length=1024, null=True, blank=True)
-    hospital_beds = models.CharField(u"Койкофонд", max_length=256, null=True, blank=True)
+    hospital_beds = append_validators(
+        models.CharField(u"Койкофонд", max_length=500, null=True, blank=True),
+        [TypeCodeValidators(object_type_codes=['*'],
+                            exclude_type_codes=['HOSPITAL_CH', 'HOSPITAL', 'SCIENCE', 'STATIONARY'],
+                            validators=[custom_null])]
+    )
     departments = append_validators(
         models.TextField(u"Перечень отделений", null=True, blank=True),
-        [CustomValidators([custom_list_of_values])]
+        [TypeCodeValidators(object_type_codes=['*'],
+                            exclude_type_codes=['HOSPITAL_CH', 'HOSPITAL', 'SCIENCE', 'SANITARY', 'STATIONARY'],
+                            validators=[custom_null]),
+         TypeCodeValidators(object_type_codes=['HOSPITAL_CH', 'HOSPITAL', 'SCIENCE', 'SANITARY', 'STATIONARY'],
+                            validators=[custom_list_of_values])]
     )
     hospital_levels = models.CharField(u"Уровень стационара", max_length=1024, null=True, blank=True)
     tour = models.CharField(u"Смена", max_length=1024, null=True, blank=True)
@@ -342,6 +395,14 @@ class Service(ChiefModelMixin):
     drugstore_type = models.CharField(u"Тип аптеки", max_length=256, null=True, blank=True)
     hospital_type = models.CharField(u"Тип стационара", max_length=256, null=True, blank=True)
     status = models.CharField(u"Статус", max_length=5, db_index=True, default='А', choices=status_choices)
+    beneficial_drug_prescriptions = append_validators(
+        models.CharField(u"Дополнительное лекарственное обеспечение", max_length=3000, null=True, blank=True),
+        [TypeCodeValidators(object_type_codes=['CLINIC'],
+                            validators=[custom_not_null]),
+         TypeCodeValidators(object_type_codes=['*'],
+                            exclude_type_codes=['CLINIC'],
+                            validators=[custom_null])]
+    )
 
     objects = ServiceManager()
 

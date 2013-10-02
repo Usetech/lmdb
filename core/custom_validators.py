@@ -1,7 +1,6 @@
 # coding=utf-8
 
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.core.validators import RegexValidator
 
 __author__ = 'yveretelnikov'
@@ -37,7 +36,7 @@ class TypeCodeValidators(CustomValidators):
 
 def custom_max_len(max_len):
     def field_length(obj, value):
-        if value is None:
+        if value is None or value == u'':
             return
         if len(value) > max_len:
             raise ValidationError(u"Длина реквизита превышает максимально допустимую")
@@ -53,7 +52,7 @@ def custom_person_name(obj, value):
     """
     Person name validation
     """
-    if value is None:
+    if value is None or value == u'':
         return
     __person_name_validator(value)
     # if ok, test for excessive space symbols
@@ -69,7 +68,7 @@ def custom_object_name(obj, value):
     """
     Object name validation
     """
-    if value is None:
+    if value is None or value == u'':
         return
     __object_name_validator(value)
     # if ok, test for excessive space symbols
@@ -81,8 +80,16 @@ def custom_not_null(obj, value):
     """
     Checks value for null
     """
-    if value is None:
+    if value is None or value == u'':
         raise __generate_error_empty()
+
+
+def custom_null(obj, value):
+    """
+    Checks value for null
+    """
+    if not (value is None or value == u''):
+        raise __generate_error_not_empty()
 
 
 def create_phone_validator():
@@ -100,7 +107,7 @@ def custom_phone_number(obj, value):
     """
     Checks for phone number
     """
-    if value is None:
+    if value is None or value is u'':
         return
     __phone_validator(value)
 
@@ -144,7 +151,7 @@ def custom_not_null_if_true(attr_name):
     def __inner(object, value):
         if hasattr(object, attr_name):
             f = getattr(object, attr_name)
-            if f and (value is None):
+            if f and (value is None or value == u''):
                 raise __generate_error_empty()
 
     return __inner
@@ -158,9 +165,9 @@ def custom_not_null_only_when_true(attr_name):
     def __inner(object, value):
         if hasattr(object, attr_name):
             f = getattr(object, attr_name)
-            if f and (value is None):
+            if f and (value is None or value == u''):
                 raise __generate_error_empty()
-            if not f and (value is not None):
+            if not f and (value is not None and value != u''):
                 raise __generate_error_not_empty()
 
     return __inner
@@ -174,14 +181,14 @@ def custom_null_if_false(attr_name):
     def __inner(object, value):
         if hasattr(object, attr_name):
             f = getattr(object, attr_name)
-            if (not f) and (value is not None):
+            if (not f) and (value is not None and value != u''):
                 raise __generate_error_not_empty()
 
     return __inner
 
 
 def __generate_error_empty():
-    return ValidationError(u"Реквизит не может быть не заполненым")
+    return ValidationError(u"Реквизит не может быть пустым")
 
 
 def __generate_error_not_empty():
@@ -200,7 +207,7 @@ def greater_than(attr_name):
     def __inner(object, value):
         if hasattr(object, attr_name):
             f = getattr(object, attr_name)
-            if not (f is None) and not (value is None) and (value <= f):
+            if not (f is None) and not (value is None or value is u'') and (value <= f):
                 raise __generate_error_invalid_value()
 
     return __inner
