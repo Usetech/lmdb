@@ -10,7 +10,7 @@ def main(path):
     path = os.path.abspath(path)
     for filename in os.listdir(path):
         filename = os.path.join(path, filename)
-        if (os.path.isfile(filename)):
+        if os.path.isfile(filename):
             undef, ext = os.path.splitext(filename)
             ext = ext.lower()
             if ext == ".csv":

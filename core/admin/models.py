@@ -151,6 +151,9 @@ class HealingObjectServiceInline(LinkedInline):
         ('info',),
         ('workhours'),
         ('specialization', ),
+        ('mat_specialization', ),
+        ('disp_specialization', ),
+        ('stat_specialization', ),
         ('paid_services', ),
         ('free_services',),
         ('drug_provisioning', 'hospital_beds'),
@@ -344,6 +347,9 @@ class ServiceAdmin(BaseGuardedModelAdmin):
             {
                 'fields': (
                     ('specialization', ),
+                    ('mat_specialization', ),
+                    ('disp_specialization', ),
+                    ('stat_specialization', ),
                     ('paid_services', ),
                     ('free_services',),
                     ('drug_provisioning', 'hospital_beds'),
